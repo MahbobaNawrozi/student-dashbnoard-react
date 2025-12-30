@@ -1,9 +1,7 @@
-/* components/Head/students.jsx */
 import { useState, useEffect } from "react";
 import "./styles.css";
 
 export default function Students() {
-  /* ---------- sidebar ---------- */
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -223,6 +221,7 @@ export default function Students() {
       min-height: 100vh;
       transition: all 0.3s;
       padding: 0.5rem;
+      margin-left: 0;
     }
     
     /* Topbar - Mobile First */
@@ -238,12 +237,32 @@ export default function Students() {
       width: 100%;
     }
     
-    .menu-toggle {
+    .topbar-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .mobile-menu-toggle {
       font-size: 1.25rem;
       cursor: pointer;
       color: var(--text);
       padding: 0.5rem;
       border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .desktop-menu-toggle {
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: var(--text);
+      padding: 0.5rem;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      justify-content: center;
     }
     
     .user-area {
@@ -334,6 +353,14 @@ export default function Students() {
       font-size: 14px;
       width: 100%;
       box-sizing: border-box;
+      background: #fff;
+      color: var(--text);
+    }
+    
+    #searchInput:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
     }
     
     /* Bulk Bar - Mobile First */
@@ -361,6 +388,7 @@ export default function Students() {
       font-weight: 500;
       font-size: 14px;
       width: 100%;
+      background: #fff;
     }
     
     .bulk-approve {
@@ -402,6 +430,7 @@ export default function Students() {
       font-size: 14px;
       white-space: nowrap;
       flex-shrink: 0;
+      color: var(--text);
     }
     
     .category-bar button.active {
@@ -519,9 +548,6 @@ export default function Students() {
       justify-content: center;
       gap: 0.5rem;
       width: 100%;
-    }
-    
-    .action-btn:not(.approve-btn) {
       background: var(--accent);
       color: white;
     }
@@ -667,26 +693,6 @@ export default function Students() {
       font-weight: 500;
     }
     
-    /* Mobile Menu Button */
-    .mobile-menu-btn {
-      display: flex;
-      position: fixed;
-      top: 0.75rem;
-      left: 0.75rem;
-      z-index: 1040;
-      background: var(--accent);
-      color: white;
-      border: none;
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius);
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    
     /* Sidebar Overlay */
     .sidebar-overlay {
       display: none;
@@ -743,8 +749,12 @@ export default function Students() {
     
     /* ========== DESKTOP STYLES (992px and up) ========== */
     @media (min-width: 992px) {
-      .mobile-menu-btn {
-        display: none;
+      .mobile-menu-toggle {
+        display: none !important;
+      }
+      
+      .desktop-menu-toggle {
+        display: flex !important;
       }
       
       .sidebar {
@@ -849,13 +859,6 @@ export default function Students() {
         margin: 0 0 0.75rem 0;
       }
       
-      .mobile-menu-btn {
-        top: 0.5rem;
-        left: 0.5rem;
-        width: 36px;
-        height: 36px;
-      }
-      
       .user-area i.fa-calendar-alt,
       .user-area i.fa-envelope {
         display: none !important;
@@ -895,15 +898,6 @@ export default function Students() {
   return (
     <>
       <style>{css}</style>
-
-      {/* Mobile menu button */}
-      <button
-        className="mobile-menu-btn"
-        onClick={toggleSidebar}
-        aria-label="Toggle menu"
-      >
-        <i className="fas fa-bars"></i>
-      </button>
 
       {/* Overlay for mobile sidebar */}
       <div
@@ -945,14 +939,24 @@ export default function Students() {
         {/* Topbar */}
         <div className="topbar">
           <div className="d-flex align-items-center justify-content-between w-100">
-            <div className="d-flex align-items-center">
+            <div className="topbar-header">
               <div
-                className="menu-toggle d-none d-lg-flex"
+                className="mobile-menu-toggle"
                 onClick={toggleSidebar}
+                aria-label="Toggle menu"
               >
                 <i className="fas fa-bars"></i>
               </div>
-              <h2 className="mb-0 ms-2 ms-sm-3">
+
+              <div
+                className="desktop-menu-toggle"
+                onClick={toggleSidebar}
+                aria-label="Toggle sidebar"
+              >
+                <i className="fas fa-bars"></i>
+              </div>
+
+              <h2 className="mb-0">
                 <span className="d-none d-sm-inline">Student Management</span>
                 <span className="d-inline d-sm-none">Students</span>
               </h2>

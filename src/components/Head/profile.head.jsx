@@ -1,8 +1,6 @@
-/* components/Head/teacher.profile.jsx */
 import { useState, useEffect } from "react";
 
 export default function TeacherProfile() {
-  /* ---------- responsive sidebar ---------- */
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
   useEffect(() => {
     const onResize = () => setCollapsed(window.innerWidth <= 992);
@@ -10,12 +8,10 @@ export default function TeacherProfile() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  /* ---------- data ---------- */
   const [avatar, setAvatar] = useState(
     "https://i.pinimg.com/736x/b6/fc/ea/b6fcea9f0fe03f2fa2b2c11fa7e35cbd.jpg "
   );
 
-  /* ---------- handlers ---------- */
   const openEditModal = () => alert("Edit profile modal would open here");
   const editPersonalInfo = () =>
     alert("Edit personal information modal would open here");
@@ -44,7 +40,6 @@ export default function TeacherProfile() {
     if (newAvatar && newAvatar.trim() !== "") setAvatar(newAvatar.trim());
   };
 
-  /* ---------- keyboard shortcut ---------- */
   useEffect(() => {
     const onKey = (e) => {
       if (e.ctrlKey && e.key === "e") {
@@ -297,7 +292,6 @@ export default function TeacherProfile() {
 
       <main className="main-content">
         <div className="profile-container">
-          {/* left card */}
           <aside className="profile-sidebar">
             <div className="profile-header">
               <img
@@ -325,9 +319,7 @@ export default function TeacherProfile() {
             </button>
           </aside>
 
-          {/* right sections */}
           <main className="profile-main">
-            {/* personal information */}
             <div className="section">
               <div className="section-header">
                 <h3 className="section-title">
@@ -360,8 +352,6 @@ export default function TeacherProfile() {
                 </div>
               </div>
             </div>
-
-            {/* contact information */}
             <div className="section">
               <div className="section-header">
                 <h3 className="section-title">
@@ -397,7 +387,6 @@ export default function TeacherProfile() {
               </div>
             </div>
 
-            {/* identification information */}
             <div className="section">
               <div className="section-header">
                 <h3 className="section-title">

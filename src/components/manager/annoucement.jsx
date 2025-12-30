@@ -1,12 +1,9 @@
-// Announcements.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-const Announcements = () => {
-  const sidebarRef = useRef(null);
-
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+const AnnouncementsPage = () => {
+  const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Announcements state
   const [announcements, setAnnouncements] = useState([
@@ -42,11 +39,44 @@ const Announcements = () => {
       expiry: "2025-01-19",
       pinned: false,
     },
+    {
+      id: 4,
+      title: "Holiday Announcement",
+      content: "College will be closed on 26th Jan for Republic Day.",
+      audience: "All",
+      priority: "Normal",
+      date: "2025-01-15",
+      expiry: "2025-01-26",
+      pinned: true,
+    },
+    {
+      id: 5,
+      title: "Library Renovation",
+      content: "Main library will be closed for renovation from Feb 1-10.",
+      audience: "Students",
+      priority: "High",
+      date: "2025-01-12",
+      expiry: "2025-01-31",
+      pinned: false,
+    },
+    {
+      id: 6,
+      title: "Sports Day Preparations",
+      content: "All students are invited to participate in sports trials.",
+      audience: "Students",
+      priority: "Normal",
+      date: "2025-01-03",
+      expiry: "2025-01-25",
+      pinned: false,
+    },
   ]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
 
-  // Modal state
+  const [filters, setFilters] = useState({
+    search: "",
+    audience: "all",
+    status: "all",
+  });
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
@@ -57,38 +87,28 @@ const Announcements = () => {
     expiry: "",
   });
 
-  // Sidebar toggles
-  const toggleDesktop = () => setIsCollapsed((prev) => !prev);
-  const toggleMobile = () => setIsMobileOpen((prev) => !prev);
+  const toggleSidebar = () => {
+    if (window.innerWidth <= 992) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setCollapsed(!collapsed);
+    }
+  };
 
-  // Close sidebar on outside click (mobile)
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (window.innerWidth <= 992 && isMobileOpen) {
-        if (
-          !sidebarRef.current?.contains(e.target) &&
-          !e.target.closest("#mobileMenuToggle")
-        ) {
-          setIsMobileOpen(false);
-        }
+    const onResize = () => {
+      const shouldCollapse = window.innerWidth <= 992;
+      setCollapsed(shouldCollapse);
+      if (window.innerWidth > 992) {
+        setMobileOpen(false);
       }
     };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [isMobileOpen]);
-
-  // Close sidebar on window resize to desktop
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 992) setIsMobileOpen(false);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Utility functions
   const today = () => new Date().toISOString().slice(0, 10);
-  const isExpired = (d) => d && d < today();
+  const isExpired = (expiryDate) => expiryDate && expiryDate < today();
   const isActive = (ann) => !isExpired(ann.expiry);
 
   // KPI counts
@@ -97,31 +117,36 @@ const Announcements = () => {
   const pinnedPosts = announcements.filter((a) => a.pinned).length;
   const expiredPosts = announcements.filter((a) => !isActive(a)).length;
 
-  // Filtered & sorted announcements
-  const filtered = announcements
-    .filter((a) => {
-      if (statusFilter === "pinned") return a.pinned;
-      if (statusFilter === "expired") return !isActive(a);
-      if (statusFilter === "active") return isActive(a);
+  // Filtered announcements
+  const filteredAnnouncements = announcements
+    .filter((ann) => {
+      if (filters.audience !== "all" && ann.audience !== filters.audience)
+        return false;
+
+      if (filters.status === "pinned" && !ann.pinned) return false;
+      if (filters.status === "active" && !isActive(ann)) return false;
+      if (filters.status === "expired" && isActive(ann)) return false;
+
+      if (
+        filters.search &&
+        !ann.title.toLowerCase().includes(filters.search.toLowerCase()) &&
+        !ann.content.toLowerCase().includes(filters.search.toLowerCase())
+      )
+        return false;
+
       return true;
     })
-    .filter(
-      (a) =>
-        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.content.toLowerCase().includes(searchQuery.toLowerCase())
-    )
     .sort((a, b) => b.pinned - a.pinned || new Date(b.date) - new Date(a.date));
 
-  // Modal handlers
   const openModal = (id = null) => {
     if (id) {
-      const a = announcements.find((an) => an.id === id);
+      const ann = announcements.find((a) => a.id === id);
       setForm({
-        title: a.title,
-        content: a.content,
-        audience: a.audience,
-        priority: a.priority,
-        expiry: a.expiry || "",
+        title: ann.title,
+        content: ann.content,
+        audience: ann.audience,
+        priority: ann.priority,
+        expiry: ann.expiry || "",
       });
       setEditingId(id);
     } else {
@@ -136,13 +161,15 @@ const Announcements = () => {
     }
     setModalOpen(true);
   };
+
   const closeModal = () => setModalOpen(false);
 
   const saveAnnouncement = () => {
     if (!form.title.trim() || !form.content.trim()) {
-      alert("Title and content are required.");
+      showToast("Title and content are required.", "warning");
       return;
     }
+
     if (editingId) {
       setAnnouncements((prev) =>
         prev.map((a) =>
@@ -151,6 +178,7 @@ const Announcements = () => {
             : a
         )
       );
+      showToast("Announcement updated successfully!", "success");
     } else {
       setAnnouncements((prev) => [
         ...prev,
@@ -162,770 +190,1498 @@ const Announcements = () => {
           pinned: false,
         },
       ]);
+      showToast("Announcement created successfully!", "success");
     }
     closeModal();
   };
 
   const deleteAnnouncement = (id) => {
-    if (!confirm("Delete this announcement?")) return;
-    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    const announcement = announcements.find((a) => a.id === id);
+    if (
+      announcement &&
+      window.confirm(`Are you sure you want to delete "${announcement.title}"?`)
+    ) {
+      setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+      showToast(`"${announcement.title}" has been deleted.`, "warning");
+    }
   };
 
   const togglePin = (id) => {
     setAnnouncements((prev) =>
       prev.map((a) => (a.id === id ? { ...a, pinned: !a.pinned } : a))
     );
+    const ann = announcements.find((a) => a.id === id);
+    showToast(
+      `"${ann.title}" ${ann.pinned ? "unpinned" : "pinned"}.`,
+      ann.pinned ? "info" : "success"
+    );
   };
 
-  // Get current page for active menu highlighting
-  const getCurrentPage = () => {
-    const path = window.location.pathname;
-    if (path.includes("dashboard") || path === "/") return "dashboard";
-    if (path.includes("department")) return "departments";
-    if (path.includes("course")) return "courses";
-    if (path.includes("head")) return "heads";
-    if (path.includes("teacher")) return "teachers";
-    if (path.includes("student")) return "students";
-    if (path.includes("assignment")) return "assignments";
-    if (path.includes("grade")) return "grades";
-    if (path.includes("certificate")) return "certificates";
-    if (path.includes("announcement")) return "announcements";
-    if (path.includes("analytic")) return "analytics";
-    if (path.includes("report")) return "reports";
-    if (path.includes("setting")) return "settings";
-    return "dashboard";
+  const showToast = (message, type = "info") => {
+    const toastEl = document.createElement("div");
+    toastEl.className = `toast-notification ${type}`;
+    toastEl.innerHTML = `
+      <div class="toast-content">
+        <i class="fas fa-${
+          type === "success"
+            ? "check-circle"
+            : type === "warning"
+            ? "exclamation-triangle"
+            : "info-circle"
+        }"></i>
+        <span>${message}</span>
+      </div>
+    `;
+
+    document.body.appendChild(toastEl);
+
+    setTimeout(() => {
+      toastEl.remove();
+    }, 3000);
   };
 
-  const currentPage = getCurrentPage();
+  const menuItems = [
+    { icon: "fas fa-tachometer-alt", label: "Dashboard", link: "/" },
+    { icon: "fas fa-layer-group", label: "Departments", link: "/departments" },
+    { icon: "fas fa-book", label: "Courses", link: "/courses" },
+    { icon: "fas fa-chalkboard-teacher", label: "Heads", link: "/heads" },
+    { icon: "fas fa-chalkboard-teacher", label: "Teachers", link: "/teachers" },
+    { icon: "fas fa-user-graduate", label: "Students", link: "/students" },
+    { icon: "fas fa-tasks", label: "Assignments", link: "/assignments" },
+    { icon: "fas fa-graduation-cap", label: "Grades", link: "/grades" },
+    {
+      icon: "fas fa-bullhorn",
+      label: "Announcements",
+      link: "/announcements",
+      active: true,
+    },
+    {
+      icon: "fas fa-certificate",
+      label: "Certificates",
+      link: "/certificates",
+    },
+    { icon: "fas fa-chart-pie", label: "Analytics", link: "/analytics" },
+    { icon: "fas fa-chart-line", label: "Reports", link: "/reports" },
+    { icon: "fas fa-cog", label: "Settings", link: "/settings" },
+    { icon: "fas fa-sign-out-alt", label: "Logout", link: "#" },
+  ];
+
+  const audiences = [...new Set(announcements.map((a) => a.audience))];
 
   return (
-    <div className="manager-dashboard">
-      {/* Mobile Menu Button */}
-      <button
-        id="mobileMenuToggle"
-        className="mobile-menu-btn"
-        onClick={toggleMobile}
-        aria-label="Toggle menu"
-      >
-        <i className="fas fa-bars" />
-      </button>
-
-      {/* Sidebar */}
-      <aside
-        ref={sidebarRef}
-        id="sidebar"
-        className={`sidebar ${isCollapsed ? "collapsed" : ""} ${
-          isMobileOpen ? "open" : ""
-        }`}
-      >
-        <div className="sidebar-header">E-Learn</div>
-        <ul className="menu">
-          <li className={currentPage === "dashboard" ? "active" : ""}>
-            <Link to="/">
-              <i className="fas fa-tachometer-alt"></i>
-              <span>Dashboard</span>
-            </Link>
-          </li>
-          <li className={currentPage === "departments" ? "active" : ""}>
-            <Link to="/departments">
-              <i className="fas fa-layer-group"></i>
-              <span>Departments</span>
-            </Link>
-          </li>
-          <li className={currentPage === "courses" ? "active" : ""}>
-            <Link to="/courses">
-              <i className="fas fa-book"></i>
-              <span>Courses</span>
-            </Link>
-          </li>
-          <li className={currentPage === "heads" ? "active" : ""}>
-            <Link to="/heads">
-              <i className="fas fa-chalkboard-teacher"></i>
-              <span>Heads</span>
-            </Link>
-          </li>
-          <li className={currentPage === "teachers" ? "active" : ""}>
-            <Link to="/teachers">
-              <i className="fas fa-chalkboard-teacher"></i>
-              <span>Teachers</span>
-            </Link>
-          </li>
-          <li className={currentPage === "students" ? "active" : ""}>
-            <Link to="/students">
-              <i className="fas fa-user-graduate"></i>
-              <span>Students</span>
-            </Link>
-          </li>
-          <li className={currentPage === "assignments" ? "active" : ""}>
-            <Link to="/assignments">
-              <i className="fas fa-tasks"></i>
-              <span>Assignments</span>
-            </Link>
-          </li>
-          <li className={currentPage === "grades" ? "active" : ""}>
-            <Link to="/grades">
-              <i className="fas fa-graduation-cap"></i>
-              <span>Grades</span>
-            </Link>
-          </li>
-          <li className={currentPage === "announcements" ? "active" : ""}>
-            <Link to="/announcements">
-              <i className="fas fa-bullhorn"></i>
-              <span>Announcements</span>
-            </Link>
-          </li>
-          <li className={currentPage === "certificates" ? "active" : ""}>
-            <Link to="/certificates">
-              <i className="fas fa-certificate"></i>
-              <span>Certificates</span>
-            </Link>
-          </li>
-          <li className={currentPage === "analytics" ? "active" : ""}>
-            <Link to="/analytics">
-              <i className="fas fa-chart-pie"></i>
-              <span>Analytics</span>
-            </Link>
-          </li>
-          <li className={currentPage === "reports" ? "active" : ""}>
-            <Link to="/reports">
-              <i className="fas fa-chart-line"></i>
-              <span>Reports</span>
-            </Link>
-          </li>
-          <li className={currentPage === "settings" ? "active" : ""}>
-            <Link to="/settings">
-              <i className="fas fa-cog"></i>
-              <span>Settings</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="#"
-              onClick={(e) => {
-                e.preventDefault();
-                console.log("Logout clicked");
-              }}
-            >
-              <i className="fas fa-sign-out-alt"></i>
-              <span>Logout</span>
-            </Link>
-          </li>
-        </ul>
-      </aside>
-
-      {/* Main Content */}
-      <main className={`main-content ${isCollapsed ? "collapsed" : ""}`}>
-        {/* Topbar */}
-        <header className="topbar d-flex justify-content-between align-items-center">
-          <div className="d-flex align-items-center">
-            <div
-              className="icon me-3"
-              onClick={toggleDesktop}
-              style={{ cursor: "pointer" }}
-            >
-              <i className="fas fa-bars" />
-            </div>
-            <div>
-              <h1 className="h5 mb-0 fw-bold">Announcements</h1>
-              <p className="text-muted mb-0 small d-none d-md-block">
-                Create, publish and manage academy-wide announcements.
-              </p>
-            </div>
-          </div>
-          <div className="d-flex align-items-center user-area">
-            <div className="icon position-relative me-2">
-              <i className="fas fa-bell"></i>
-              <span className="badge">3</span>
-            </div>
-            <div className="icon me-2 d-none d-md-flex">
-              <i className="fas fa-envelope"></i>
-            </div>
-            <Link to="/profile" className="d-inline-block">
-              <img
-                src="https://i.pravatar.cc/100?img=12"
-                alt="Manager Avatar"
-                className="user-avatar"
-              />
-            </Link>
-          </div>
-        </header>
-
-        {/* KPI Cards */}
-        <div className="content-area">
-          <div className="row g-3 mb-4">
-            <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-              <div className="dashboard-card text-center">
-                <div className="card-icon">
-                  <i className="fas fa-bullhorn"></i>
-                </div>
-                <div className="card-info">
-                  <h3 className="fs-6 text-muted mb-2">Total Posts</h3>
-                  <p className="fs-3 fw-bold mb-0">{totalPosts}</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-              <div className="dashboard-card text-center">
-                <div className="card-icon">
-                  <i className="fas fa-check-circle"></i>
-                </div>
-                <div className="card-info">
-                  <h3 className="fs-6 text-muted mb-2">Active</h3>
-                  <p className="fs-3 fw-bold mb-0">{activePosts}</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-              <div className="dashboard-card text-center">
-                <div className="card-icon">
-                  <i className="fas fa-thumbtack"></i>
-                </div>
-                <div className="card-info">
-                  <h3 className="fs-6 text-muted mb-2">Pinned</h3>
-                  <p className="fs-3 fw-bold mb-0">{pinnedPosts}</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-              <div className="dashboard-card text-center">
-                <div className="card-icon">
-                  <i className="fas fa-exclamation-triangle"></i>
-                </div>
-                <div className="card-info">
-                  <h3 className="fs-6 text-muted mb-2">Expired</h3>
-                  <p className="fs-3 fw-bold mb-0">{expiredPosts}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Filter bar */}
-          <div className="data-section mb-4">
-            <div className="d-flex flex-wrap gap-2 mb-3">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search title / content..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ maxWidth: "300px" }}
-              />
-              <select
-                className="form-select"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                style={{ maxWidth: "180px" }}
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="pinned">Pinned</option>
-                <option value="expired">Expired</option>
-              </select>
-              <button className="btn btn-primary" onClick={() => openModal()}>
-                <i className="fas fa-plus me-1"></i> New Announcement
-              </button>
-            </div>
-
-            {/* Announcements Grid */}
-            <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-              {filtered.map((a) => (
-                <div className="col" key={a.id}>
-                  <div className="card h-100 announcement-card">
-                    <div className="card-body">
-                      <div className="d-flex justify-content-between align-items-start mb-3">
-                        <h5 className="card-title mb-0">{a.title}</h5>
-                        <div>
-                          {a.pinned && (
-                            <span className="badge bg-warning me-1">
-                              Pinned
-                            </span>
-                          )}
-                          {!isActive(a) && (
-                            <span className="badge bg-secondary">Expired</span>
-                          )}
-                        </div>
-                      </div>
-                      <p className="card-text text-muted small mb-2">
-                        <i className="fas fa-calendar-alt me-1"></i> {a.date} |
-                        <i className="fas fa-users me-1 ms-2"></i> {a.audience}{" "}
-                        |
-                        <span
-                          className={`ms-2 badge ${
-                            a.priority === "High"
-                              ? "bg-danger"
-                              : a.priority === "Urgent"
-                              ? "bg-danger"
-                              : "bg-info"
-                          }`}
-                        >
-                          {a.priority}
-                        </span>
-                      </p>
-                      <p className="card-text mb-4">{a.content}</p>
-
-                      <div className="d-flex justify-content-between align-items-center">
-                        <div className="text-muted small">
-                          {a.expiry ? `Expires: ${a.expiry}` : "No expiry"}
-                        </div>
-                        <div className="btn-group">
-                          <button
-                            className={`btn btn-sm ${
-                              a.pinned ? "btn-warning" : "btn-outline-warning"
-                            }`}
-                            onClick={() => togglePin(a.id)}
-                            title={a.pinned ? "Un-pin" : "Pin"}
-                          >
-                            <i className="fas fa-thumbtack"></i>
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={() => openModal(a.id)}
-                          >
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => deleteAnnouncement(a.id)}
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Modal */}
-      {modalOpen && (
-        <div className="modal-backdrop show d-flex align-items-center justify-content-center">
-          <div
-            className="modal-content bg-white rounded p-4"
-            style={{ maxWidth: "500px", width: "90%" }}
-          >
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h2 className="h4 mb-0">
-                {editingId ? "Edit Announcement" : "New Announcement"}
-              </h2>
-              <button className="btn btn-close" onClick={closeModal}></button>
-            </div>
-            <div className="row g-3">
-              <div className="col-md-12">
-                <label className="form-label">Title *</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="e.g. Semester Start Date"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="col-md-12">
-                <label className="form-label">Content *</label>
-                <textarea
-                  className="form-control"
-                  rows="4"
-                  placeholder="Detailed message..."
-                  value={form.content}
-                  onChange={(e) =>
-                    setForm({ ...form, content: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Audience</label>
-                <select
-                  className="form-select"
-                  value={form.audience}
-                  onChange={(e) =>
-                    setForm({ ...form, audience: e.target.value })
-                  }
-                >
-                  <option value="All">All Users</option>
-                  <option value="Students">Students Only</option>
-                  <option value="Teachers">Teachers Only</option>
-                  <option value="Managers">Managers Only</option>
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Priority</label>
-                <select
-                  className="form-select"
-                  value={form.priority}
-                  onChange={(e) =>
-                    setForm({ ...form, priority: e.target.value })
-                  }
-                >
-                  <option value="Normal">Normal</option>
-                  <option value="High">High</option>
-                  <option value="Urgent">Urgent</option>
-                </select>
-              </div>
-              <div className="col-md-12">
-                <label className="form-label">Expiry Date (optional)</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={form.expiry}
-                  onChange={(e) => setForm({ ...form, expiry: e.target.value })}
-                />
-              </div>
-              <div className="col-12 d-flex justify-content-end gap-2 mt-3">
-                <button className="btn btn-secondary" onClick={closeModal}>
-                  Cancel
-                </button>
-                <button className="btn btn-primary" onClick={saveAnnouncement}>
-                  Save Announcement
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ==================== ADD CSS HERE ==================== */}
+    <>
       <style>{`
-        /* Base styles */
-        .manager-dashboard {
-          display: flex;
+        :root {
+          --sidebar-bg: #1a237e;
+          --sidebar-head: #1a237e;
+          --accent: #1a237e;
+          --text: #333;
+          --text-light: #555;
+          --border: #eee;
+          --card-bg: #fff;
+          --shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+          --radius: 8px;
+          --light-bg: #f5f6fa;
+          --dark-text: #1e293b;
+          --gray-text: #64748b;
+          --primary-color: #1a237e;
+          --secondary-color: #38bdf8;
+        }
+        
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+        
+        body {
+          background: var(--light-bg);
+          color: var(--text);
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          overflow-x: hidden;
+          width: 100vw;
+          max-width: 100%;
+        }
+        
+        /* ========== MAIN CONTAINER ========== */
+        .announcements-page {
           min-height: 100vh;
+          background: var(--light-bg);
+          position: relative;
+          width: 100vw;
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+        
+        /* ========== MOBILE FIRST STYLES ========== */
+        /* Main Content - Mobile First */
+        .main-content {
+          width: 100vw;
+          max-width: 100%;
+          min-height: 100vh;
+          transition: all 0.3s;
+          padding: 0.5rem;
+          margin-left: 0;
+          background: var(--light-bg);
+          overflow-x: hidden;
+          position: relative;
+        }
+        
+        /* Topbar - Mobile First */
+        .topbar {
+          background: #fff;
+          box-shadow: var(--shadow);
+          border-radius: var(--radius);
+          padding: 0.75rem;
+          margin: 0 0 1rem 0;
+          position: sticky;
+          top: 0.5rem;
+          z-index: 1020;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        
+        .topbar-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          width: 100%;
+        }
+        
+        .mobile-menu-toggle {
+          font-size: 1.25rem;
+          cursor: pointer;
+          color: var(--text);
+          padding: 0.5rem;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        
+        .desktop-menu-toggle {
+          font-size: 1.25rem;
+          cursor: pointer;
+          color: var(--text);
+          padding: 0.5rem;
+          border-radius: 8px;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        
+        .welcome {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .welcome h2 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          margin: 0;
+          color: var(--dark-text);
+          white-space: nowrap;
           overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
+        }
+        
+        .welcome p {
+          font-size: 0.85rem;
+          color: var(--gray-text);
+          margin: 0.25rem 0 0 0;
+          display: none;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
+        }
+        
+        .user-area {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          flex-shrink: 0;
+        }
+        
+        .notification-badge {
+          position: relative;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+        
+        .badge-counter {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background: #e74c3c;
+          color: white;
+          font-size: 0.6rem;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .avatar-img {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid #f8f9fa;
+          flex-shrink: 0;
         }
 
-        /* Sidebar with custom scrollbar */
+        /* Content Area - Mobile First */
+        .content-area {
+          width: 100%;
+          padding: 0;
+          background: transparent;
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        /* KPI Grid - Mobile First */
+        .kpi-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+          margin: 0 0 1.5rem 0;
+          width: 100%;
+          max-width: 100%;
+        }
+        
+        .dashboard-card {
+          background: var(--card-bg);
+          border-radius: var(--radius);
+          padding: 1rem;
+          box-shadow: var(--shadow);
+          transition: transform 0.2s;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          width: 100%;
+          box-sizing: border-box;
+        }
+        
+        .dashboard-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-icon {
+          background: linear-gradient(135deg, var(--primary-color), #1a237e);
+          padding: 12px;
+          border-radius: 8px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          flex-shrink: 0;
+        }
+        
+        .card-icon i {
+          font-size: 20px;
+          color: #fff;
+        }
+        
+        .card-label {
+          font-size: 13px;
+          color: var(--gray-text);
+          margin: 0 0 4px;
+          font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          width: 100%;
+          text-align: center;
+        }
+        
+        .card-value {
+          font-size: 24px;
+          font-weight: 700;
+          color: var(--dark-text);
+          margin: 0;
+          line-height: 1;
+        }
+
+        /* Filter Section - Mobile First */
+        .filter-section {
+          background: var(--card-bg);
+          border-radius: var(--radius);
+          padding: 1rem;
+          margin: 0 0 1.5rem 0;
+          box-shadow: var(--shadow);
+          width: 100%;
+          max-width: 100%;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          box-sizing: border-box;
+        }
+        
+        .filter-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+        }
+        
+        .form-control, .form-select {
+          padding: 0.75rem;
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          font-size: 14px;
+          width: 100%;
+          box-sizing: border-box;
+          background: #fff;
+          color: var(--text);
+          max-width: 100%;
+        }
+        
+        .form-control:focus, .form-select:focus {
+          outline: none;
+          border-color: var(--accent);
+          box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+        }
+        
+        .search-btn, .new-announcement-btn {
+          background: var(--primary-color);
+          border: none;
+          padding: 0.75rem 1rem;
+          border-radius: var(--radius);
+          color: white;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          transition: all 0.3s;
+          width: 100%;
+          justify-content: center;
+        }
+        
+        .search-btn:hover, .new-announcement-btn:hover {
+          background: #151c65;
+          transform: translateY(-2px);
+        }
+
+        /* Announcements Grid - Mobile First */
+        .announcements-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1rem;
+          margin: 0 0 1.5rem 0;
+          width: 100%;
+        }
+        
+        .announcement-card {
+          background: var(--card-bg);
+          border-radius: var(--radius);
+          overflow: hidden;
+          box-shadow: var(--shadow);
+          transition: transform 0.3s;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          width: 100%;
+          box-sizing: border-box;
+          padding: 1rem;
+        }
+        
+        .announcement-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .announcement-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 0.75rem;
+        }
+        
+        .announcement-title {
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--dark-text);
+          margin: 0;
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 70%;
+        }
+        
+        .announcement-badges {
+          display: flex;
+          gap: 0.25rem;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+        
+        .badge {
+          padding: 0.25rem 0.5rem;
+          border-radius: 12px;
+          font-size: 0.7rem;
+          font-weight: 500;
+          display: inline-block;
+          white-space: nowrap;
+        }
+        
+        .badge-pinned {
+          background: #fef3c7;
+          color: #d97706;
+        }
+        
+        .badge-expired {
+          background: #fee2e2;
+          color: #dc2626;
+        }
+        
+        .badge-audience {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+        
+        .badge-priority {
+          padding: 0.25rem 0.75rem;
+        }
+        
+        .badge-normal {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+        
+        .badge-high {
+          background: #fee2e2;
+          color: #dc2626;
+        }
+        
+        .badge-urgent {
+          background: #450a0a;
+          color: #fff;
+        }
+        
+        .announcement-info {
+          font-size: 0.85rem;
+          color: var(--gray-text);
+          margin: 0 0 0.75rem 0;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+        
+        .announcement-content {
+          font-size: 0.9rem;
+          color: var(--text-light);
+          margin: 0 0 1rem 0;
+          line-height: 1.5;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        .announcement-meta {
+          font-size: 0.8rem;
+          color: var(--gray-text);
+          margin: 0 0 1rem 0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        
+        .announcement-actions {
+          display: flex;
+          gap: 0.5rem;
+          justify-content: flex-end;
+        }
+        
+        .action-btn {
+          padding: 0.4rem 0.75rem;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          justify-content: center;
+          border: 1px solid;
+          background: transparent;
+          min-width: 60px;
+        }
+        
+        .pin-btn {
+          border-color: #f59e0b;
+          color: #f59e0b;
+        }
+        
+        .pin-btn:hover {
+          background: #f59e0b;
+          color: white;
+        }
+        
+        .pin-btn.pinned {
+          background: #f59e0b;
+          color: white;
+        }
+        
+        .edit-btn {
+          border-color: var(--primary-color);
+          color: var(--primary-color);
+        }
+        
+        .edit-btn:hover {
+          background: var(--primary-color);
+          color: white;
+        }
+        
+        .delete-btn {
+          border-color: #ef4444;
+          color: #ef4444;
+        }
+        
+        .delete-btn:hover {
+          background: #ef4444;
+          color: white;
+        }
+
+        /* Sidebar - Mobile First (hidden by default) */
         .sidebar {
-          width: 240px;
-          background: linear-gradient(180deg, #1a237e, #1a237e);
+          width: 280px;
+          background: var(--sidebar-bg);
           color: #fff;
           height: 100vh;
           position: fixed;
           top: 0;
           left: 0;
           z-index: 1030;
-          transition: 0.3s;
+          transition: transform 0.3s;
           display: flex;
           flex-direction: column;
-          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-          overflow-y: auto;
-        }
-
-        .sidebar::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 3px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.3);
-          border-radius: 3px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.4);
-        }
-
-        .sidebar {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-header {
-          padding: 20px;
-          background: rgba(255, 255, 255, 0.1);
-          text-align: center;
-          font-size: 1.5rem;
-          font-weight: 600;
-          height: 80px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .menu {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-          flex-grow: 1;
-        }
-
-        .menu li a {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 1rem 1.5rem;
-          color: #e2e8f0;
-          text-decoration: none;
-          transition: all 0.3s;
-          border-left: 4px solid transparent;
-        }
-
-        .menu li a:hover,
-        .menu li.active a {
-          background: rgba(255, 255, 255, 0.15);
-          border-left-color: #1a237e;
-          color: #fff;
-        }
-
-        .sidebar.collapsed {
-          width: 80px;
-        }
-
-        .sidebar.collapsed .sidebar-header {
-          font-size: 0;
-          letter-spacing: -1px;
-        }
-
-        .sidebar.collapsed .menu li a span {
-          display: none;
-        }
-
-        /* Main Content */
-        .main-content {
-          margin-left: 240px;
-          height: 100vh;
-          transition: margin-left 0.3s;
-          display: flex;
-          flex-direction: column;
-          flex: 1;
+          box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+          transform: translateX(-100%);
           overflow: hidden;
         }
-
-        .main-content.collapsed {
-          margin-left: 80px;
-        }
-
-        /* Mobile Menu Button */
-        .mobile-menu-btn {
-          display: none;
-          position: fixed;
-          top: 20px;
-          left: 20px;
-          z-index: 1040;
-          background: #1a237e;
-          color: white;
-          border: none;
-          width: 44px;
-          height: 44px;
-          border-radius: 8px;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          cursor: pointer;
-        }
-
-        /* Topbar */
-        .topbar {
-          background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-          margin: 15px 15px 1.5rem 15px;
-          padding: 1rem 1.5rem !important;
-          min-height: 70px;
-          flex-shrink: 0;
-        }
-
-        .icon {
-          background: #eff6ff;
-          color: #1a237e;
-          padding: 0.7rem;
-          border-radius: 10px;
-          cursor: pointer;
-          transition: 0.3s;
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .icon:hover {
-          background: #1a237e;
-          color: #fff;
-        }
-
-        .user-avatar {
-          width: 42px;
-          height: 42px;
-          border-radius: 50%;
-          border: 2px solid #1a237e;
-          flex-shrink: 0;
-        }
-
-        .badge {
-          position: absolute;
-          top: -6px;
-          right: -6px;
-          background: #ef4444;
-          color: white;
-          border-radius: 50%;
-          width: 18px;
-          height: 18px;
-          font-size: 0.7rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        /* Content Area with custom scrollbar */
-        .content-area {
-          flex: 1;
-          overflow-y: auto;
-          padding: 0 15px 15px 15px;
-          margin-bottom: 15px;
-        }
-
-        .content-area::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .content-area::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 4px;
-        }
-
-        .content-area::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 4px;
-        }
-
-        .content-area::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-
-        .content-area {
-          scrollbar-width: thin;
-          scrollbar-color: #c1c1c1 #f1f1f1;
-        }
-
-        /* Dashboard Cards */
-        .dashboard-card {
-          background: #fff;
-          border-radius: 12px;
-          padding: 20px;
-          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-          transition: transform 0.3s;
-          height: 100%;
-        }
-
-        .dashboard-card:hover {
-          transform: translateY(-4px);
-        }
-
-        .dashboard-card i {
-          font-size: 28px;
-          margin-bottom: 10px;
-          color: #fff;
-        }
-
-        .card-icon {
-          background: linear-gradient(135deg, #1a237e, #1a237e);
-          padding: 12px;
-          border-radius: 10px;
-          display: inline-block;
-          margin-bottom: 10px;
-        }
-
-        /* Data Section */
-        .data-section {
-          background: #fff;
-          border-radius: 12px;
-          padding: 1.5rem;
-          margin-bottom: 2rem;
-          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        /* Announcement Cards */
-        .announcement-card {
-          transition: transform 0.2s;
-          border: 1px solid #e9ecef;
+        
+        .sidebar.open {
+          transform: translateX(0);
         }
         
-        .announcement-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        .sidebar-header {
+          padding: 1.25rem;
+          background: var(--sidebar-head);
+          text-align: center;
+          font-size: 1.25rem;
+          font-weight: 600;
+          height: 70px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          flex-shrink: 0;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        
+        .nav-links {
+          list-style: none;
+          padding: 1rem 0;
+          margin: 0;
+          flex-grow: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+          height: calc(100vh - 70px);
+        }
+        
+        .nav-links::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .nav-links::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-links::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 4px;
+        }
+        
+        .nav-links li {
+          margin: 0.25rem 0.75rem;
+        }
+        
+        .nav-links li a {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 1rem;
+          color: rgba(255, 255, 255, 0.85);
+          text-decoration: none;
+          transition: all 0.3s;
+          border-radius: 8px;
+          font-weight: 500;
+          font-size: 14px;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        
+        .nav-links li.active a,
+        .nav-links li a:hover {
+          background: rgba(255, 255, 255, 0.15);
+          color: #fff;
         }
 
-        /* Modal */
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 1029;
+          backdrop-filter: blur(3px);
+        }
+        
+        .sidebar-overlay.open {
+          display: block;
+        }
+
+        /* Modal Styles */
         .modal-backdrop {
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0,0,0,0.5);
+          background: rgba(0, 0, 0, 0.5);
           z-index: 1050;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
         }
-
+        
         .modal-content {
+          background: white;
+          border-radius: var(--radius);
+          width: 100%;
+          max-width: 500px;
           max-height: 90vh;
           overflow-y: auto;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+          padding: 1.5rem 1.5rem 0.5rem;
+          border-bottom: 1px solid var(--border);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .modal-body {
+          padding: 1.5rem;
+        }
+        
+        .modal-footer {
+          padding: 1rem 1.5rem 1.5rem;
+          border-top: 1px solid var(--border);
+          display: flex;
+          justify-content: flex-end;
+          gap: 0.75rem;
+        }
+        
+        .modal-close {
+          background: none;
+          border: none;
+          font-size: 1.25rem;
+          cursor: pointer;
+          color: var(--gray-text);
+          padding: 0.25rem;
+          border-radius: 4px;
+        }
+        
+        .modal-close:hover {
+          background: #f8f9fa;
+          color: var(--dark-text);
+        }
+        
+        .form-label {
+          display: block;
+          font-size: 0.9rem;
+          font-weight: 500;
+          color: var(--dark-text);
+          margin-bottom: 0.5rem;
+        }
+        
+        .btn {
+          padding: 0.75rem 1.5rem;
+          border-radius: var(--radius);
+          font-weight: 500;
+          cursor: pointer;
+          border: none;
+          transition: all 0.3s;
+          font-size: 14px;
+        }
+        
+        .btn-primary {
+          background: var(--primary-color);
+          color: white;
+        }
+        
+        .btn-primary:hover {
+          background: #151c65;
+        }
+        
+        .btn-secondary {
+          background: #6c757d;
+          color: white;
+        }
+        
+        .btn-secondary:hover {
+          background: #5a6268;
         }
 
-        .modal-content::-webkit-scrollbar {
-          width: 6px;
+        /* Toast Notification */
+        .toast-notification {
+          position: fixed;
+          top: 1rem;
+          right: 1rem;
+          background: white;
+          border-radius: var(--radius);
+          padding: 1rem;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 1100;
+          animation: slideIn 0.3s ease-out;
+          max-width: 300px;
+          border-left: 4px solid;
         }
-
-        .modal-content::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 3px;
+        
+        .toast-notification.success {
+          border-left-color: #10b981;
         }
-
-        .modal-content::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 3px;
+        
+        .toast-notification.warning {
+          border-left-color: #f59e0b;
         }
-
-        .modal-content::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
+        
+        .toast-notification.info {
+          border-left-color: var(--primary-color);
         }
-
-        /* Responsive */
-        @media (max-width: 992px) {
-          .sidebar {
-            transform: translateX(-100%);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        
+        .toast-content {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        
+        .toast-content i {
+          font-size: 1.25rem;
+        }
+        
+        .toast-content i.fa-check-circle {
+          color: #10b981;
+        }
+        
+        .toast-content i.fa-exclamation-triangle {
+          color: #f59e0b;
+        }
+        
+        .toast-content i.fa-info-circle {
+          color: var(--primary-color);
+        }
+        
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
           }
-
-          .sidebar.open {
+          to {
             transform: translateX(0);
+            opacity: 1;
           }
+        }
 
+        /* ========== SMALL TABLET (≥576px) ========== */
+        @media (min-width: 576px) {
           .main-content {
-            margin-left: 0 !important;
-            width: 100%;
+            padding: 0.75rem;
           }
-
-          .mobile-menu-btn {
-            display: flex;
+          
+          .kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
           }
-
-          .topbar {
-            margin-top: 60px;
+          
+          .welcome p {
+            display: block;
           }
+          
+          .card-icon {
+            width: 56px;
+            height: 56px;
+          }
+          
+          .card-icon i {
+            font-size: 24px;
+          }
+          
+          .card-label {
+            font-size: 14px;
+          }
+          
+          .card-value {
+            font-size: 28px;
+          }
+          
+          .filter-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          
+          .announcements-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
 
-          .sidebar::-webkit-scrollbar,
-          .content-area::-webkit-scrollbar {
+        /* ========== TABLET (≥768px) ========== */
+        @media (min-width: 768px) {
+          .kpi-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+          }
+          
+          .dashboard-card {
+            padding: 1.25rem;
+          }
+          
+          .filter-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+          
+          .announcements-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        /* ========== DESKTOP (≥992px) ========== */
+        @media (min-width: 992px) {
+          .mobile-menu-toggle {
+            display: none !important;
+          }
+          
+          .desktop-menu-toggle {
+            display: flex !important;
+          }
+          
+          .sidebar {
+            transform: translateX(0);
+            width: 250px;
+          }
+          
+          .sidebar.collapsed {
+            width: 70px;
+          }
+          
+          .sidebar.collapsed .sidebar-header span {
             display: none;
           }
+          
+          .sidebar.collapsed .nav-links li a span {
+            display: none;
+          }
+          
+          .sidebar.collapsed .nav-links li a {
+            justify-content: center;
+            padding: 0.875rem;
+          }
+          
+          .sidebar-overlay {
+            display: none !important;
+          }
+          
+          .main-content {
+            margin-left: 250px;
+            width: calc(100vw - 250px);
+            max-width: calc(100vw - 250px);
+            padding: 1rem 1.5rem;
+          }
+          
+          .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
+            width: calc(100vw - 70px);
+            max-width: calc(100vw - 70px);
+          }
+          
+          .topbar {
+            padding: 1rem 1.5rem;
+            margin: 0 0 1.5rem 0;
+          }
+          
+          .avatar-img {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f8f9fa;
+          }
+          
+          .welcome p {
+            font-size: 0.9rem;
+          }
+          
+          .announcements-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
 
-          .sidebar,
+        /* ========== LARGE DESKTOP (≥1200px) ========== */
+        @media (min-width: 1200px) {
+          .main-content {
+            padding: 1rem 2rem;
+          }
+          
+          .announcements-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+          
           .content-area {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            max-width: 100%;
+          }
+        }
+
+        /* ========== EXTRA LARGE DESKTOP (≥1400px) ========== */
+        @media (min-width: 1400px) {
+          .main-content {
+            padding: 1.5rem 3rem;
+          }
+          
+          .announcements-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+        }
+
+        /* ========== EXTRA SMALL MOBILE (≤400px) ========== */
+        @media (max-width: 400px) {
+          .main-content {
+            padding: 0.25rem;
+          }
+          
+          .topbar {
+            padding: 0.5rem;
+            margin: 0 0 0.75rem 0;
+          }
+          
+          .user-area i.fa-calendar-alt,
+          .user-area i.fa-envelope {
+            display: none !important;
+          }
+          
+          .kpi-grid {
+            gap: 0.5rem;
+          }
+          
+          .dashboard-card {
+            padding: 0.75rem;
+            gap: 8px;
+          }
+          
+          .card-icon {
+            padding: 8px;
+            width: 40px;
+            height: 40px;
+          }
+          
+          .card-icon i {
+            font-size: 16px;
+          }
+          
+          .card-value {
+            font-size: 20px;
+          }
+          
+          .card-label {
+            font-size: 12px;
+          }
+          
+          .filter-section {
+            padding: 0.75rem;
+          }
+          
+          .announcement-card {
+            padding: 0.75rem;
+          }
+          
+          .announcement-title {
+            font-size: 0.9rem;
+          }
+          
+          .announcement-content {
+            font-size: 0.85rem;
+          }
+          
+          .announcement-info {
+            font-size: 0.8rem;
+          }
+          
+          .badge {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.4rem;
+          }
+          
+          .action-btn {
+            padding: 0.3rem 0.5rem;
+            font-size: 11px;
+            min-width: 50px;
+          }
+        }
+
+        /* ========== VERY SMALL MOBILE (≤350px) ========== */
+        @media (max-width: 350px) {
+          .topbar-header {
+            gap: 0.5rem;
+          }
+          
+          .topbar-header h2 {
+            font-size: 1rem;
+          }
+          
+          .avatar-img {
+            width: 32px;
+            height: 32px;
+          }
+          
+          .dashboard-card {
+            flex-direction: row;
+            text-align: left;
+            align-items: center;
+            gap: 0.75rem;
+          }
+          
+          .card-icon {
+            flex-shrink: 0;
+          }
+          
+          .card-info {
+            flex: 1;
+            min-width: 0;
+          }
+          
+          .card-label {
+            text-align: left;
+          }
+          
+          .announcement-badges {
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.125rem;
+          }
+          
+          .announcement-actions {
+            flex-direction: column;
+            gap: 0.25rem;
+          }
+          
+          .action-btn {
+            width: 100%;
+          }
+        }
+        
+        /* ========== FIX FOR ALL MOBILE DEVICES ========== */
+        @media (max-width: 992px) {
+          .main-content {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            margin-left: 0 !important;
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+          }
+          
+          .content-area, .filter-section, .announcements-grid {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          
+          .announcements-grid {
+            gap: 0.75rem;
+          }
+        }
+        
+        /* Animation */
+        .fade-in {
+          animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
       `}</style>
-    </div>
+
+      <div className="announcements-page">
+        {/* Overlay for mobile sidebar */}
+        <div
+          className={`sidebar-overlay ${mobileOpen ? "open" : ""}`}
+          onClick={() => setMobileOpen(false)}
+        />
+
+        {/* Sidebar */}
+        <aside
+          className={`sidebar ${collapsed ? "collapsed" : ""} ${
+            mobileOpen ? "open" : ""
+          }`}
+        >
+          <div className="sidebar-header">
+            <span>E-Learn</span>
+          </div>
+          <ul className="nav-links">
+            {menuItems.map((item) => (
+              <li key={item.link} className={item.active ? "active" : ""}>
+                <Link
+                  to={item.link}
+                  onClick={() =>
+                    window.innerWidth <= 992 && setMobileOpen(false)
+                  }
+                >
+                  <i className={item.icon}></i>
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        {/* Main content */}
+        <main className="main-content">
+          {/* Topbar */}
+          <div className="topbar">
+            <div className="d-flex align-items-center justify-content-between w-100">
+              <div className="topbar-header">
+                <div
+                  className="mobile-menu-toggle"
+                  onClick={toggleSidebar}
+                  aria-label="Toggle menu"
+                >
+                  <i className="fas fa-bars"></i>
+                </div>
+
+                <div
+                  className="desktop-menu-toggle"
+                  onClick={toggleSidebar}
+                  aria-label="Toggle sidebar"
+                >
+                  <i className="fas fa-bars"></i>
+                </div>
+
+                <div className="welcome">
+                  <h2 className="mb-0">
+                    <span className="d-none d-sm-inline">
+                      Announcements Dashboard
+                    </span>
+                    <span className="d-inline d-sm-none">Announcements</span>
+                  </h2>
+                  <p className="text-muted mb-0 small d-none d-md-block">
+                    Create, publish and manage academy-wide announcements.
+                  </p>
+                </div>
+              </div>
+              <div className="user-area">
+                <div className="notification-badge position-relative">
+                  <i className="fas fa-bell fs-5"></i>
+                  <span className="badge-counter">3</span>
+                </div>
+                <i className="fas fa-calendar-alt d-none d-md-inline-block fs-5"></i>
+                <i className="fas fa-envelope d-none d-md-inline-block fs-5"></i>
+                <Link to="/managerProfile" className="d-inline-block">
+                  <img
+                    src="https://i.pravatar.cc/300?img=12"
+                    alt="Manager Avatar"
+                    className="avatar-img"
+                  />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="content-area">
+            {/* KPI Cards */}
+            <div className="kpi-grid">
+              <div className="dashboard-card fade-in">
+                <div className="card-icon">
+                  <i className="fas fa-bullhorn"></i>
+                </div>
+                <div className="card-info">
+                  <h3 className="card-label">Total Posts</h3>
+                  <p className="card-value">{totalPosts}</p>
+                </div>
+              </div>
+
+              <div className="dashboard-card fade-in">
+                <div className="card-icon">
+                  <i className="fas fa-check-circle"></i>
+                </div>
+                <div className="card-info">
+                  <h3 className="card-label">Active</h3>
+                  <p className="card-value">{activePosts}</p>
+                </div>
+              </div>
+
+              <div className="dashboard-card fade-in">
+                <div className="card-icon">
+                  <i className="fas fa-thumbtack"></i>
+                </div>
+                <div className="card-info">
+                  <h3 className="card-label">Pinned</h3>
+                  <p className="card-value">{pinnedPosts}</p>
+                </div>
+              </div>
+
+              <div className="dashboard-card fade-in">
+                <div className="card-icon">
+                  <i className="fas fa-exclamation-triangle"></i>
+                </div>
+                <div className="card-info">
+                  <h3 className="card-label">Expired</h3>
+                  <p className="card-value">{expiredPosts}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="filter-section fade-in">
+              <div className="filter-grid">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search by title or content..."
+                  value={filters.search}
+                  onChange={(e) =>
+                    setFilters({ ...filters, search: e.target.value })
+                  }
+                />
+                <select
+                  className="form-select"
+                  value={filters.audience}
+                  onChange={(e) =>
+                    setFilters({ ...filters, audience: e.target.value })
+                  }
+                >
+                  <option value="all">All Audiences</option>
+                  {audiences.map((aud) => (
+                    <option key={aud} value={aud}>
+                      {aud}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="form-select"
+                  value={filters.status}
+                  onChange={(e) =>
+                    setFilters({ ...filters, status: e.target.value })
+                  }
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="pinned">Pinned</option>
+                  <option value="expired">Expired</option>
+                </select>
+                <button
+                  className="new-announcement-btn"
+                  onClick={() => openModal()}
+                >
+                  <i className="fas fa-plus"></i> New Announcement
+                </button>
+              </div>
+            </div>
+
+            {/* Announcements Grid */}
+            <div className="announcements-grid">
+              {filteredAnnouncements.map((announcement) => (
+                <div
+                  className="announcement-card fade-in"
+                  key={announcement.id}
+                >
+                  <div className="announcement-header">
+                    <h3 className="announcement-title">{announcement.title}</h3>
+                    <div className="announcement-badges">
+                      {announcement.pinned && (
+                        <span className="badge badge-pinned">Pinned</span>
+                      )}
+                      {!isActive(announcement) && (
+                        <span className="badge badge-expired">Expired</span>
+                      )}
+                      <span
+                        className={`badge badge-priority badge-${announcement.priority.toLowerCase()}`}
+                      >
+                        {announcement.priority}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="announcement-info">
+                    <span>
+                      <i className="fas fa-calendar-alt"></i>{" "}
+                      {announcement.date}
+                    </span>
+                    <span className="badge badge-audience">
+                      <i className="fas fa-users"></i> {announcement.audience}
+                    </span>
+                  </div>
+                  <p className="announcement-content">{announcement.content}</p>
+                  <div className="announcement-meta">
+                    <span>
+                      {announcement.expiry
+                        ? `Expires: ${announcement.expiry}`
+                        : "No expiry date"}
+                    </span>
+                  </div>
+                  <div className="announcement-actions">
+                    <button
+                      className={`action-btn pin-btn ${
+                        announcement.pinned ? "pinned" : ""
+                      }`}
+                      onClick={() => togglePin(announcement.id)}
+                      title={announcement.pinned ? "Unpin" : "Pin"}
+                    >
+                      <i className="fas fa-thumbtack"></i>{" "}
+                      {announcement.pinned ? "Unpin" : "Pin"}
+                    </button>
+                    <button
+                      className="action-btn edit-btn"
+                      onClick={() => openModal(announcement.id)}
+                    >
+                      <i className="fas fa-edit"></i> Edit
+                    </button>
+                    <button
+                      className="action-btn delete-btn"
+                      onClick={() => deleteAnnouncement(announcement.id)}
+                    >
+                      <i className="fas fa-trash"></i> Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
+
+        {/* Modal */}
+        {modalOpen && (
+          <div className="modal-backdrop">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h2 className="h4 mb-0">
+                  {editingId ? "Edit Announcement" : "New Announcement"}
+                </h2>
+                <button
+                  className="modal-close"
+                  onClick={() => setModalOpen(false)}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="row g-3">
+                  <div className="col-12">
+                    <label className="form-label">Title *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. Semester Start Date"
+                      value={form.title}
+                      onChange={(e) =>
+                        setForm({ ...form, title: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label">Content *</label>
+                    <textarea
+                      className="form-control"
+                      rows="4"
+                      placeholder="Detailed message..."
+                      value={form.content}
+                      onChange={(e) =>
+                        setForm({ ...form, content: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Audience</label>
+                    <select
+                      className="form-select"
+                      value={form.audience}
+                      onChange={(e) =>
+                        setForm({ ...form, audience: e.target.value })
+                      }
+                    >
+                      <option value="All">All Users</option>
+                      <option value="Students">Students Only</option>
+                      <option value="Teachers">Teachers Only</option>
+                      <option value="Managers">Managers Only</option>
+                    </select>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Priority</label>
+                    <select
+                      className="form-select"
+                      value={form.priority}
+                      onChange={(e) =>
+                        setForm({ ...form, priority: e.target.value })
+                      }
+                    >
+                      <option value="Normal">Normal</option>
+                      <option value="High">High</option>
+                      <option value="Urgent">Urgent</option>
+                    </select>
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label">Expiry Date (optional)</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={form.expiry}
+                      onChange={(e) =>
+                        setForm({ ...form, expiry: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button className="btn btn-primary" onClick={saveAnnouncement}>
+                  {editingId ? "Update Announcement" : "Create Announcement"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
-export default Announcements;
+export default AnnouncementsPage;

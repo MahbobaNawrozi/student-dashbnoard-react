@@ -30,54 +30,6 @@
 
 // export default App;
 
-// //manager
-// import React from "react";
-// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-// import Analytic from "./components/manager/analytic";
-// import Annoucement from "./components/manager/annoucement";
-// import Grade from "./components/manager/grades";
-// import Certificate from "./components/manager/certificate";
-// import CourseManagement from "./components/manager/course";
-// import Assignments from "./components/manager/assignment";
-// import Reports from "./components/manager/reports";
-
-// // Import the additional components you mentioned in previous conversions
-// import Departments from "./components/manager/department";
-// import HeadDashboard from "./components/manager/head";
-// import ManagerDashboard from "./components/manager/index";
-// import ManagerReports from "./components/manager/reports";
-// import ManagerSettings from "./components/manager/setting";
-// import StudentsPage from "./components/manager/student";
-// import TeachersPage from "./components/manager/teacher";
-
-// function App() {
-//   return (
-//     <Router>
-//       <Routes>
-//         {/* Add a default/home route */}
-//         <Route path="/" element={<ManagerDashboard />} />
-
-//         {/* Manager Dashboard Routes */}
-//         <Route path="/dashboard" element={<ManagerDashboard />} />
-//         <Route path="/departments" element={<Departments />} />
-//         <Route path="/courses" element={<CourseManagement />} />
-//         <Route path="/head" element={<HeadDashboard />} />
-//         <Route path="/teachers" element={<TeachersPage />} />
-//         <Route path="/students" element={<StudentsPage />} />
-//         <Route path="/assignments" element={<Assignments />} />
-//         <Route path="/grades" element={<Grade />} />
-//         <Route path="/announcement" element={<Annoucement />} />
-//         <Route path="/certificate" element={<Certificate />} />
-//         <Route path="/analytic" element={<Analytic />} />
-//         <Route path="/reports" element={<ManagerReports />} />
-//         <Route path="/settings" element={<ManagerSettings />} />
-//       </Routes>
-//     </Router>
-//   );
-// }
-
-// export default App;
-
 //teacher
 
 // import AllCourses from "./components/Teacher/all-courses";
@@ -111,29 +63,76 @@
 // }
 
 // export default App;
+
+// import React from "react";
+// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// import Annoucement from "./components/Head/annoucement";
+// import Course from "./components/Head/courses";
+// import Index from "./components/Head/index";
+// import ProfileHead from "./components/Head/profile.head";
+// import Report from "./components/Head/report";
+// import Setting from "./components/Head/setting";
+// import Student from "./components/Head/students";
+// import Teacher from "./components/Head/teachers";
+
+// function App() {
+//   return (
+//     <Routes>
+//       <Route path="/" element={<Index />} />
+//       <Route path="/annoucement" element={<Annoucement />}></Route>
+//       <Route path="/courses" element={<Course />}></Route>
+//       <Route path="/index" element={<Index />}></Route>
+//       <Route path="/profile.head" element={<ProfileHead />}></Route>
+//       <Route path="/report" element={<Report />}></Route>
+//       <Route path="/setting" element={<Setting />}></Route>
+//       <Route path="/students" element={<Student />}></Route>
+//       <Route path="/teachers" element={<Teacher />}></Route>
+//     </Routes>
+//   );
+// }
+
+// export default App;
+
+//manager
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Annoucement from "./components/Head/annoucement";
-import Course from "./components/Head/courses";
-import Index from "./components/Head/index";
-import ProfileHead from "./components/Head/profile.head";
-import Report from "./components/Head/report";
-import Setting from "./components/Head/setting";
-import Student from "./components/Head/students";
-import Teacher from "./components/Head/teachers";
+import Analytics from "./components/manager/analytic"; // File is "analytic.jsx"
+import Announcements from "./components/manager/annoucement"; // File is "annoucement.jsx" (note typo)
+import Grades from "./components/manager/grades"; // File is "grades.jsx"
+import Certificates from "./components/manager/certificate"; // File is "certificate.jsx"
+import CourseManagement from "./components/manager/course";
+import Assignments from "./components/manager/assignment";
+import Reports from "./components/manager/reports";
+import Departments from "./components/manager/department";
+import HeadDashboard from "./components/manager/head";
+import ManagerDashboard from "./components/manager/index";
+import ManagerReports from "./components/manager/reports";
+import ManagerSettings from "./components/manager/setting";
+import StudentsPage from "./components/manager/student";
+import TeachersPage from "./components/manager/teacher";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/annoucement" element={<Annoucement />}></Route>
-      <Route path="/courses" element={<Course />}></Route>
-      <Route path="/index" element={<Index />}></Route>
-      <Route path="/profile.head" element={<ProfileHead />}></Route>
-      <Route path="/report" element={<Report />}></Route>
-      <Route path="/setting" element={<Setting />}></Route>
-      <Route path="/students" element={<Student />}></Route>
-      <Route path="/teachers" element={<Teacher />}></Route>
+      <Route path="/" element={<ManagerDashboard />} />
+      <Route path="/dashboard" element={<ManagerDashboard />} />
+      <Route path="/departments" element={<Departments />} />
+      <Route path="/courses" element={<CourseManagement />} />
+      <Route path="/head" element={<HeadDashboard />} />
+      <Route path="/teachers" element={<TeachersPage />} />
+      <Route path="/students" element={<StudentsPage />} />
+      <Route path="/assignments" element={<Assignments />} />
+      <Route path="/grades" element={<Grades />} />
+      <Route path="/announcements" element={<Announcements />} />
+      <Route path="/certificates" element={<Certificates />} />
+      <Route path="/analytic" element={<Analytics />} />
+      <Route path="/reports" element={<ManagerReports />} />
+      <Route path="/settings" element={<ManagerSettings />} />
+
+      {/* Optional: Redirect for backward compatibility */}
+      <Route path="/announcement" element={<Announcements />} />
+      <Route path="/certificate" element={<Certificates />} />
+      <Route path="/analytics" element={<Analytics />} />
     </Routes>
   );
 }

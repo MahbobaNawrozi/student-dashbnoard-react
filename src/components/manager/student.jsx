@@ -1,72 +1,85 @@
 import React, { useState, useEffect } from "react";
-import { Toast } from "bootstrap";
+import { Link } from "react-router-dom";
 
 const StudentsPage = () => {
-  // Sidebar state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Students data state
   const [students, setStudents] = useState([
     {
+      id: 1,
       name: "John Doe",
-      dept: "CS",
+      dept: "Computer Science",
       course: "Self-Paced",
       status: "active",
-      img: "https://i.pravatar.cc/150?img=1",
+      email: "john@academy.com",
+      avatar: "https://i.pravatar.cc/150?img=1",
     },
     {
+      id: 2,
       name: "Jane Smith",
       dept: "Business",
       course: "Teacher-Led",
       status: "graduated",
-      img: "https://i.pravatar.cc/150?img=2",
+      email: "jane@academy.com",
+      avatar: "https://i.pravatar.cc/150?img=2",
     },
     {
+      id: 3,
       name: "Alice Green",
-      dept: "CS",
+      dept: "Computer Science",
       course: "Self-Paced",
       status: "pending",
-      img: "https://i.pravatar.cc/150?img=3",
+      email: "alice@academy.com",
+      avatar: "https://i.pravatar.cc/150?img=3",
     },
     {
+      id: 4,
       name: "Bob White",
       dept: "Design",
       course: "Teacher-Led",
       status: "inactive",
-      img: "https://i.pravatar.cc/150?img=4",
+      email: "bob@academy.com",
+      avatar: "https://i.pravatar.cc/150?img=4",
     },
     {
+      id: 5,
       name: "Michael Brown",
       dept: "Business",
       course: "Self-Paced",
       status: "active",
-      img: "https://i.pravatar.cc/150?img=5",
+      email: "michael@academy.com",
+      avatar: "https://i.pravatar.cc/150?img=5",
     },
     {
+      id: 6,
       name: "Lucy Gray",
       dept: "Design",
       course: "Teacher-Led",
       status: "graduated",
-      img: "https://i.pravatar.cc/150?img=6",
+      email: "lucy@academy.com",
+      avatar: "https://i.pravatar.cc/150?img=6",
     },
     {
+      id: 7,
       name: "Sarah Johnson",
-      dept: "CS",
+      dept: "Computer Science",
       course: "Teacher-Led",
       status: "active",
-      img: "https://i.pravatar.cc/150?img=7",
+      email: "sarah@academy.com",
+      avatar: "https://i.pravatar.cc/150?img=7",
     },
     {
+      id: 8,
       name: "Tom Wilson",
       dept: "Business",
       course: "Self-Paced",
       status: "pending",
-      img: "https://i.pravatar.cc/150?img=8",
+      email: "tom@academy.com",
+      avatar: "https://i.pravatar.cc/150?img=8",
     },
   ]);
 
-  // Filter state
   const [filters, setFilters] = useState({
     activeTab: "all",
     status: "all",
@@ -74,67 +87,91 @@ const StudentsPage = () => {
     search: "",
   });
 
-  // Menu items
-  const menuItems = [
-    { icon: "fas fa-tachometer-alt", label: "Dashboard", link: "index.html" },
-    {
-      icon: "fas fa-layer-group",
-      label: "Departments",
-      link: "departments.html",
-    },
-    { icon: "fas fa-book", label: "Courses", link: "courses.html" },
-    { icon: "fas fa-chalkboard-teacher", label: "Heads", link: "head.html" },
-    {
-      icon: "fas fa-chalkboard-teacher",
-      label: "Teachers",
-      link: "teachers.html",
-    },
-    {
-      icon: "fas fa-user-graduate",
-      label: "Students",
-      link: "students.html",
-      active: true,
-    },
-    { icon: "fas fa-tasks", label: "Assignments", link: "assignments.html" },
-    { icon: "fas fa-graduation-cap", label: "Grades", link: "grades.html" },
-    {
-      icon: "fas fa-chart-line",
-      label: "Announcement",
-      link: "announcement.html",
-    },
-    {
-      icon: "fas fa-certificate",
-      label: "Certificates",
-      link: "certificate.html",
-    },
-    { icon: "fas fa-chart-pie", label: "Analytics", link: "analytics.html" },
-    { icon: "fas fa-chart-line", label: "Reports", link: "reports.html" },
-    { icon: "fas fa-cog", label: "Settings", link: "setting.html" },
-    { icon: "fas fa-sign-out-alt", label: "Logout", link: "#" },
-  ];
+  const toggleSidebar = () => {
+    if (window.innerWidth <= 992) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setCollapsed(!collapsed);
+    }
+  };
 
-  // Tabs data
-  const tabs = [
-    { id: "all", label: "All Students" },
-    { id: "pending", label: "Pending" },
-    { id: "selfpaced", label: "Self-Paced" },
-    { id: "teacherled", label: "Teacher-Led" },
-  ];
+  useEffect(() => {
+    const onResize = () => {
+      const shouldCollapse = window.innerWidth <= 992;
+      setCollapsed(shouldCollapse);
+      if (window.innerWidth > 992) {
+        setMobileOpen(false);
+      }
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
-  // Calculate summary statistics
-  const totalStudents = students.length;
-  const activeStudents = students.filter((s) => s.status === "active").length;
-  const inactiveStudents = students.filter(
-    (s) => s.status === "inactive"
-  ).length;
-  const graduatedStudents = students.filter(
-    (s) => s.status === "graduated"
-  ).length;
-  const pendingStudents = students.filter((s) => s.status === "pending").length;
+  const handleTabChange = (tabId) => {
+    setFilters((prev) => ({
+      ...prev,
+      activeTab: tabId,
+    }));
+  };
 
-  // Filter students based on current filters
+  const handleFilterChange = (type, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [type]: value,
+    }));
+  };
+
+  const handleViewStudent = (id) => {
+    // In a real app, this would navigate to student detail page
+    console.log(`Viewing student with ID: ${id}`);
+    showToast(`Viewing details for student`, "info");
+  };
+
+  const handleApproveStudent = (id) => {
+    setStudents((prev) =>
+      prev.map((student) =>
+        student.id === id ? { ...student, status: "active" } : student
+      )
+    );
+    const studentName = students.find((s) => s.id === id)?.name || "Student";
+    showToast(`${studentName} has been approved!`, "success");
+  };
+
+  const handleDeleteStudent = (id) => {
+    const student = students.find((s) => s.id === id);
+    if (
+      student &&
+      window.confirm(`Are you sure you want to delete ${student.name}?`)
+    ) {
+      setStudents((prev) => prev.filter((s) => s.id !== id));
+      showToast(`${student.name} has been deleted.`, "warning");
+    }
+  };
+
+  const showToast = (message, type = "info") => {
+    const toastEl = document.createElement("div");
+    toastEl.className = `toast-notification ${type}`;
+    toastEl.innerHTML = `
+      <div class="toast-content">
+        <i class="fas fa-${
+          type === "success"
+            ? "check-circle"
+            : type === "warning"
+            ? "exclamation-triangle"
+            : "info-circle"
+        }"></i>
+        <span>${message}</span>
+      </div>
+    `;
+
+    document.body.appendChild(toastEl);
+
+    setTimeout(() => {
+      toastEl.remove();
+    }, 3000);
+  };
+
   const filteredStudents = students.filter((student) => {
-    // Tab filter
     if (filters.activeTab === "pending" && student.status !== "pending")
       return false;
     if (
@@ -148,364 +185,75 @@ const StudentsPage = () => {
     )
       return false;
 
-    // Status filter
     if (filters.status !== "all" && student.status !== filters.status)
       return false;
 
-    // Course filter
     if (
       filters.course !== "all" &&
       student.course.toLowerCase().replace("-", "") !== filters.course
     )
       return false;
 
-    // Search filter
     if (
       filters.search &&
-      !student.name.toLowerCase().includes(filters.search.toLowerCase())
+      !student.name.toLowerCase().includes(filters.search.toLowerCase()) &&
+      !student.email.toLowerCase().includes(filters.search.toLowerCase()) &&
+      !student.dept.toLowerCase().includes(filters.search.toLowerCase())
     )
       return false;
 
     return true;
   });
 
-  // Handle tab change
-  const handleTabChange = (tabId) => {
-    setFilters((prev) => ({
-      ...prev,
-      activeTab: tabId,
-    }));
-  };
+  const totalStudents = students.length;
+  const activeStudents = students.filter((s) => s.status === "active").length;
+  const inactiveStudents = students.filter(
+    (s) => s.status === "inactive"
+  ).length;
+  const graduatedStudents = students.filter(
+    (s) => s.status === "graduated"
+  ).length;
+  const pendingStudents = students.filter((s) => s.status === "pending").length;
 
-  // Handle filter changes
-  const handleFilterChange = (type, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [type]: value,
-    }));
-  };
+  const menuItems = [
+    { icon: "fas fa-tachometer-alt", label: "Dashboard", link: "/" },
+    { icon: "fas fa-layer-group", label: "Departments", link: "/departments" },
+    { icon: "fas fa-book", label: "Courses", link: "/courses" },
+    { icon: "fas fa-chalkboard-teacher", label: "Heads", link: "/heads" },
+    { icon: "fas fa-chalkboard-teacher", label: "Teachers", link: "/teachers" },
+    {
+      icon: "fas fa-user-graduate",
+      label: "Students",
+      link: "/students",
+      active: true,
+    },
+    { icon: "fas fa-tasks", label: "Assignments", link: "/assignments" },
+    { icon: "fas fa-graduation-cap", label: "Grades", link: "/grades" },
+    { icon: "fas fa-bullhorn", label: "Announcements", link: "/announcements" },
+    {
+      icon: "fas fa-certificate",
+      label: "Certificates",
+      link: "/certificates",
+    },
+    { icon: "fas fa-chart-pie", label: "Analytics", link: "/analytics" },
+    { icon: "fas fa-chart-line", label: "Reports", link: "/reports" },
+    { icon: "fas fa-cog", label: "Settings", link: "/settings" },
+    { icon: "fas fa-sign-out-alt", label: "Logout", link: "#" },
+  ];
 
-  // Student action handlers
-  const handleViewStudent = (name) => {
-    alert(`Viewing details for: ${name}`);
-    // In a real app, this would navigate to student detail page
-  };
-
-  const handleApproveStudent = (name) => {
-    const updatedStudents = students.map((student) => {
-      if (student.name === name) {
-        return { ...student, status: "active" };
-      }
-      return student;
-    });
-
-    setStudents(updatedStudents);
-    showToast(`${name} has been approved!`, "success");
-  };
-
-  const handleDeleteStudent = (name) => {
-    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
-      const updatedStudents = students.filter(
-        (student) => student.name !== name
-      );
-      setStudents(updatedStudents);
-      showToast(`${name} has been deleted.`, "warning");
-    }
-  };
-
-  // Show toast notification
-  const showToast = (message, type = "info") => {
-    const toast = document.createElement("div");
-    toast.className = `toast align-items-center text-white bg-${
-      type === "success" ? "success" : type === "warning" ? "warning" : "info"
-    } border-0`;
-    toast.setAttribute("role", "alert");
-    toast.setAttribute("aria-live", "assertive");
-    toast.setAttribute("aria-atomic", "true");
-
-    toast.innerHTML = `
-      <div class="d-flex">
-        <div class="toast-body">
-          ${message}
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
-    `;
-
-    const container = document.createElement("div");
-    container.className = "toast-container position-fixed bottom-0 end-0 p-3";
-    container.appendChild(toast);
-    document.body.appendChild(container);
-
-    const bsToast = new Toast(toast);
-    bsToast.show();
-
-    toast.addEventListener("hidden.bs.toast", function () {
-      container.remove();
-    });
-  };
-
-  // Sidebar toggle handlers
-  const toggleDesktopSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
-
-  const toggleMobileSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleMenuItemClick = () => {
-    if (window.innerWidth <= 992) {
-      setSidebarOpen(false);
-    }
-  };
-
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 992) {
-        setSidebarOpen(false);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Close sidebar when clicking outside (mobile)
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (window.innerWidth <= 992) {
-        const sidebar = document.querySelector(".sidebar");
-        const mobileBtn = document.querySelector(".mobile-menu-btn");
-        if (
-          sidebar &&
-          !sidebar.contains(e.target) &&
-          mobileBtn &&
-          !mobileBtn.contains(e.target)
-        ) {
-          setSidebarOpen(false);
-        }
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+  const tabs = [
+    { id: "all", label: "All Students" },
+    { id: "pending", label: "Pending" },
+    { id: "selfpaced", label: "Self-Paced" },
+    { id: "teacherled", label: "Teacher-Led" },
+  ];
 
   return (
-    <div className="students-container">
-      {/* Mobile Menu Button */}
-      <button className="mobile-menu-btn" onClick={toggleMobileSidebar}>
-        <i className="fas fa-bars"></i>
-      </button>
-
-      {/* Sidebar */}
-      <aside
-        className={`sidebar ${sidebarCollapsed ? "collapsed" : ""} ${
-          sidebarOpen ? "open" : ""
-        }`}
-      >
-        <div className="sidebar-header">E-Learn</div>
-        <div className="menu-wrapper">
-          <ul className="menu">
-            {menuItems.map((item, index) => (
-              <li key={index} className={item.active ? "active" : ""}>
-                <a href={item.link} onClick={handleMenuItemClick}>
-                  <i className={item.icon}></i>
-                  <span>{item.label}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        {/* Topbar */}
-        <header className="topbar">
-          <div className="topbar-left">
-            <div className="icon" onClick={toggleDesktopSidebar}>
-              <i className="fas fa-bars"></i>
-            </div>
-            <div className="welcome">
-              <h1>Student Dashboard</h1>
-              <p>Browse, filter and manage every student in the academy.</p>
-            </div>
-          </div>
-          <div className="user-area">
-            <div className="icon position-relative">
-              <i className="fas fa-bell"></i>
-              <span
-                className="badge bg-danger"
-                style={{
-                  position: "absolute",
-                  top: "-5px",
-                  right: "-5px",
-                  fontSize: "0.6rem",
-                  padding: "2px 5px",
-                }}
-              >
-                3
-              </span>
-            </div>
-            <div className="icon d-none d-md-flex">
-              <i className="fas fa-envelope"></i>
-            </div>
-            <a href="managerProfile.html" className="d-inline-block">
-              <img
-                src="https://i.pravatar.cc/100?img=12"
-                alt="Manager Avatar"
-                className="user-avatar"
-              />
-            </a>
-          </div>
-        </header>
-
-        {/* Summary Cards */}
-        <div className="container-fluid px-0 px-md-3">
-          <div className="row g-3 mb-4">
-            <div className="col-md-6 col-lg">
-              <div className="dashboard-card">
-                <h3>{totalStudents}</h3>
-                <p>Total Students</p>
-              </div>
-            </div>
-            <div className="col-md-6 col-lg">
-              <div className="dashboard-card">
-                <h3>{activeStudents}</h3>
-                <p>Active</p>
-              </div>
-            </div>
-            <div className="col-md-6 col-lg">
-              <div className="dashboard-card">
-                <h3>{inactiveStudents}</h3>
-                <p>Inactive</p>
-              </div>
-            </div>
-            <div className="col-md-6 col-lg">
-              <div className="dashboard-card">
-                <h3>{graduatedStudents}</h3>
-                <p>Graduated</p>
-              </div>
-            </div>
-            <div className="col-md-6 col-lg">
-              <div className="dashboard-card">
-                <h3>{pendingStudents}</h3>
-                <p>Pending</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                className={`tab-btn ${
-                  filters.activeTab === tab.id ? "active" : ""
-                }`}
-                onClick={() => handleTabChange(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Filters */}
-          <div className="row g-2 mb-4 align-items-center">
-            <div className="col-md-3 col-sm-6 mb-2 mb-md-0">
-              <select
-                className="form-select"
-                value={filters.status}
-                onChange={(e) => handleFilterChange("status", e.target.value)}
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="graduated">Graduated</option>
-                <option value="pending">Pending</option>
-              </select>
-            </div>
-            <div className="col-md-3 col-sm-6 mb-2 mb-md-0">
-              <select
-                className="form-select"
-                value={filters.course}
-                onChange={(e) => handleFilterChange("course", e.target.value)}
-              >
-                <option value="all">All Courses</option>
-                <option value="selfpaced">Self-Paced</option>
-                <option value="teacherled">Teacher-Led</option>
-              </select>
-            </div>
-            <div className="col-md-4 col-sm-12 mb-2 mb-md-0">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search by name..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange("search", e.target.value)}
-                onKeyUp={(e) => {
-                  if (e.key === "Enter") {
-                    // Search is already handled by the filteredStudents calculation
-                  }
-                }}
-              />
-            </div>
-            <div className="col-md-2 col-sm-12">
-              <button className="btn btn-primary w-100" onClick={() => {}}>
-                <i className="fas fa-search"></i> Search
-              </button>
-            </div>
-          </div>
-
-          {/* Students Grid */}
-          <div className="student-grid">
-            {filteredStudents.map((student, index) => (
-              <div key={index} className="student-card">
-                <img src={student.img} alt={student.name} />
-                <div className="content">
-                  <h4>{student.name}</h4>
-                  <p>
-                    {student.dept} | {student.course}
-                  </p>
-                  <span className={`badge ${student.status}`}>
-                    {student.status.charAt(0).toUpperCase() +
-                      student.status.slice(1)}
-                  </span>
-                  <div className="actions">
-                    <button
-                      className="view-btn"
-                      onClick={() => handleViewStudent(student.name)}
-                    >
-                      <i className="fas fa-eye"></i> View
-                    </button>
-                    {student.status === "pending" && (
-                      <button
-                        className="approve-btn"
-                        onClick={() => handleApproveStudent(student.name)}
-                      >
-                        <i className="fas fa-check"></i> Approve
-                      </button>
-                    )}
-                    <button
-                      className="delete-btn"
-                      onClick={() => handleDeleteStudent(student.name)}
-                    >
-                      <i className="fas fa-trash"></i> Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
-
-      <style jsx>{`
+    <>
+      <style>{`
         :root {
           --sidebar-bg: #1a237e;
+          --sidebar-head: #1a237e;
           --accent: #1a237e;
           --text: #333;
           --text-light: #555;
@@ -513,667 +261,1238 @@ const StudentsPage = () => {
           --card-bg: #fff;
           --shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
           --radius: 8px;
+          --light-bg: #f5f6fa;
+          --dark-text: #1e293b;
+          --gray-text: #64748b;
+          --primary-color: #1a237e;
+          --secondary-color: #38bdf8;
         }
-
+        
         * {
           box-sizing: border-box;
-        }
-
-        body {
           margin: 0;
-          font-family: "Poppins", sans-serif;
-          background: #f5f6fa;
+          padding: 0;
+        }
+        
+        body {
+          background: var(--light-bg);
+          color: var(--text);
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          overflow-x: hidden;
+          width: 100vw;
+          max-width: 100%;
+        }
+        
+        /* ========== MAIN CONTAINER ========== */
+        .students-page {
+          min-height: 100vh;
+          background: var(--light-bg);
+          position: relative;
+          width: 100vw;
+          max-width: 100%;
           overflow-x: hidden;
         }
-
-        .students-container {
-          display: flex;
+        
+        /* ========== MOBILE FIRST STYLES ========== */
+        /* Main Content - Mobile First */
+        .main-content {
+          width: 100vw;
+          max-width: 100%;
           min-height: 100vh;
+          transition: all 0.3s;
+          padding: 0.5rem;
+          margin-left: 0;
+          background: var(--light-bg);
+          overflow-x: hidden;
+          position: relative;
         }
-
-        /* Sidebar - Professional with hidden scroll */
-        .sidebar {
-          width: 260px;
-          background: linear-gradient(180deg, #1a237e, #1a237e);
-          color: #fff;
-          height: 100vh;
-          position: fixed;
-          top: 0;
-          left: 0;
-          z-index: 1030;
-          transition: all 0.3s ease;
+        
+        /* Topbar - Mobile First */
+        .topbar {
+          background: #fff;
+          box-shadow: var(--shadow);
+          border-radius: var(--radius);
+          padding: 0.75rem;
+          margin: 0 0 1rem 0;
+          position: sticky;
+          top: 0.5rem;
+          z-index: 1020;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        
+        .topbar-header {
           display: flex;
-          flex-direction: column;
-          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+          align-items: center;
+          gap: 0.75rem;
+          width: 100%;
         }
-
-        .sidebar.collapsed {
-          width: 70px;
-        }
-
-        .sidebar-header {
-          padding: 1.8rem;
-          background: rgba(255, 255, 255, 0.1);
-          text-align: center;
-          font-size: 1.5rem;
-          font-weight: 600;
-          height: 80px;
+        
+        .mobile-menu-toggle {
+          font-size: 1.25rem;
+          cursor: pointer;
+          color: var(--text);
+          padding: 0.5rem;
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
         }
-
-        .sidebar.collapsed .sidebar-header {
-          font-size: 0;
-          padding: 1.8rem 0;
-        }
-
-        .menu-wrapper {
-          flex: 1;
-          overflow-y: auto;
-          overflow-x: hidden;
-          padding: 10px 0;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-
-        .menu-wrapper::-webkit-scrollbar {
-          display: none;
-        }
-
-        .menu {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-
-        .menu li a {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 1rem 1.5rem;
-          color: #e2e8f0;
-          text-decoration: none;
-          transition: all 0.3s;
-          border-left: 4px solid transparent;
-          white-space: nowrap;
-        }
-
-        .menu li a:hover,
-        .menu li.active a {
-          background: rgba(255, 255, 255, 0.15);
-          border-left-color: #1a237e;
-          color: #fff;
-        }
-
-        .sidebar.collapsed .menu li a {
-          padding: 1rem;
-          justify-content: center;
-        }
-
-        .sidebar.collapsed .menu li a span {
-          display: none;
-        }
-
-        .main-content {
-          margin-left: 260px;
-          min-height: 100vh;
-          transition: margin-left 0.3s;
-          padding: 20px;
-          width: calc(100vw - 260px);
-          box-sizing: border-box;
-          overflow-y: auto;
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .main-content::-webkit-scrollbar {
-          display: none;
-        }
-        .sidebar.collapsed ~ .main-content {
-          margin-left: 70px;
-          width: calc(100vw - 70px);
-        }
-
-        .mobile-menu-btn {
-          display: none;
-          position: fixed;
-          top: 20px;
-          left: 20px;
-          z-index: 1040;
-          background: #1a237e;
-          color: white;
-          border: none;
-          width: 44px;
-          height: 44px;
-          border-radius: 8px;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
+        
+        .desktop-menu-toggle {
+          font-size: 1.25rem;
           cursor: pointer;
-        }
-
-        /* ----------  TOPBAR  ---------- */
-        .topbar {
-          display: flex;
-          justify-content: space-between;
+          color: var(--text);
+          padding: 0.5rem;
+          border-radius: 8px;
+          display: none;
           align-items: center;
-          padding: 1rem 1.5rem;
-          min-height: 60px;
-          background: var(--card-bg);
-          border-radius: var(--radius);
-          box-shadow: var(--shadow);
-          margin-bottom: 1.5rem;
-          width: 100%;
-          box-sizing: border-box;
-          gap: 15px;
+          justify-content: center;
+          flex-shrink: 0;
         }
-        .topbar-left {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
+        
+        .welcome {
           flex: 1;
           min-width: 0;
         }
-        .welcome {
-          min-width: 0;
-        }
-        .welcome h1 {
-          font-size: 1.4rem;
-          color: var(--dark-text);
+        
+        .welcome h2 {
+          font-size: 1.25rem;
+          font-weight: 600;
           margin: 0;
+          color: var(--dark-text);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          max-width: 100%;
         }
+        
         .welcome p {
           font-size: 0.85rem;
           color: var(--gray-text);
-          margin: 2px 0 0;
+          margin: 0.25rem 0 0 0;
+          display: none;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
         }
-        .icon {
-          background: #eff6ff;
-          color: var(--primary-color);
-          width: 40px;
-          height: 40px;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: 0.3s;
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-        }
-        .icon:hover {
-          background: var(--primary-color);
-          color: #fff;
-        }
-        .badge {
-          position: absolute;
-          top: -4px;
-          right: -4px;
-          background: #ef4444;
-          color: #fff;
-          border-radius: 50%;
-          width: 16px;
-          height: 16px;
-          font-size: 0.65rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
+        
         .user-area {
           display: flex;
           align-items: center;
           gap: 0.75rem;
           flex-shrink: 0;
         }
-        .user-avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          border: 2px solid var(--primary-color);
-          object-fit: cover;
+        
+        .notification-badge {
+          position: relative;
+          cursor: pointer;
           flex-shrink: 0;
         }
-        /* Cards */
-        .dashboard-card {
-          background: #fff;
-          border-radius: 12px;
-          padding: 20px;
-          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-          transition: all 0.3s;
-          height: 100%;
-          text-align: center;
-          border: 1px solid transparent;
-        }
-
-        .dashboard-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-          border-color: #1a237e;
-        }
-
-        .dashboard-card h3 {
-          font-size: 24px;
-          color: #1e293b;
-          margin-bottom: 6px;
-        }
-
-        .dashboard-card p {
-          font-size: 14px;
-          color: #64748b;
-        }
-
-        /* Tabs */
-        .tabs {
+        
+        .badge-counter {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background: #e74c3c;
+          color: white;
+          font-size: 0.6rem;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
           display: flex;
-          gap: 10px;
-          margin-bottom: 20px;
-          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .avatar-img {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid #f8f9fa;
+          flex-shrink: 0;
         }
 
-        .tab-btn {
-          padding: 10px 20px;
-          background: #e0e0e0;
+        /* Content Area - Mobile First */
+        .content-area {
+          width: 100%;
+          padding: 0;
+          background: transparent;
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        /* KPI Grid - Mobile First */
+        .kpi-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+          margin: 0 0 1.5rem 0;
+          width: 100%;
+          max-width: 100%;
+        }
+        
+        .dashboard-card {
+          background: var(--card-bg);
+          border-radius: var(--radius);
+          padding: 1rem;
+          box-shadow: var(--shadow);
+          transition: transform 0.2s;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          width: 100%;
+          box-sizing: border-box;
+        }
+        
+        .dashboard-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-icon {
+          background: linear-gradient(135deg, var(--primary-color), #1a237e);
+          padding: 12px;
           border-radius: 8px;
-          cursor: pointer;
-          font-weight: 500;
-          transition: 0.2s;
-          border: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          flex-shrink: 0;
         }
-
-        .tab-btn.active {
-          background: #1a237e;
+        
+        .card-icon i {
+          font-size: 20px;
           color: #fff;
         }
-
-        .tab-btn:hover {
-          opacity: 0.8;
-        }
-
-        /* Student Grid */
-        .student-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 20px;
-        }
-
-        .student-card {
-          background: #fff;
-          border-radius: 12px;
+        
+        .card-label {
+          font-size: 13px;
+          color: var(--gray-text);
+          margin: 0 0 4px;
+          font-weight: 500;
+          white-space: nowrap;
           overflow: hidden;
-          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+          text-overflow: ellipsis;
+          width: 100%;
+          text-align: center;
+        }
+        
+        .card-value {
+          font-size: 24px;
+          font-weight: 700;
+          color: var(--dark-text);
+          margin: 0;
+          line-height: 1;
+        }
+
+        /* Tabs - Mobile First */
+        .tabs-container {
+          background: var(--card-bg);
+          border-radius: var(--radius);
+          padding: 1rem;
+          margin: 0 0 1.5rem 0;
+          box-shadow: var(--shadow);
+          width: 100%;
+          max-width: 100%;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          box-sizing: border-box;
+        }
+        
+        .tabs {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        
+        .tab-btn {
+          padding: 0.75rem 1rem;
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          background: transparent;
+          color: var(--gray-text);
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s;
+          text-align: center;
+          width: 100%;
+        }
+        
+        .tab-btn.active {
+          background: var(--primary-color);
+          color: white;
+          border-color: var(--primary-color);
+        }
+        
+        .tab-btn:hover:not(.active) {
+          background: #f8fafc;
+          border-color: var(--accent);
+        }
+
+        /* Filter Section - Mobile First */
+        .filter-section {
+          background: var(--card-bg);
+          border-radius: var(--radius);
+          padding: 1rem;
+          margin: 0 0 1.5rem 0;
+          box-shadow: var(--shadow);
+          width: 100%;
+          max-width: 100%;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          box-sizing: border-box;
+        }
+        
+        .filter-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+        }
+        
+        .form-control, .form-select {
+          padding: 0.75rem;
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          font-size: 14px;
+          width: 100%;
+          box-sizing: border-box;
+          background: #fff;
+          color: var(--text);
+          max-width: 100%;
+        }
+        
+        .form-control:focus, .form-select:focus {
+          outline: none;
+          border-color: var(--accent);
+          box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+        }
+        
+        .search-btn {
+          background: var(--primary-color);
+          border: none;
+          padding: 0.75rem 1rem;
+          border-radius: var(--radius);
+          color: white;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          transition: all 0.3s;
+          width: 100%;
+          justify-content: center;
+        }
+        
+        .search-btn:hover {
+          background: #151c65;
+          transform: translateY(-2px);
+        }
+
+        /* Students Grid - Mobile First */
+        .students-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1rem;
+          margin: 0 0 1.5rem 0;
+          width: 100%;
+        }
+        
+        .student-card {
+          background: var(--card-bg);
+          border-radius: var(--radius);
+          overflow: hidden;
+          box-shadow: var(--shadow);
           transition: transform 0.3s;
-          position: relative;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          width: 100%;
+          box-sizing: border-box;
         }
-
+        
         .student-card:hover {
-          transform: translateY(-8px);
+          transform: translateY(-4px);
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
-
-        .student-card img {
+        
+        .student-avatar {
           width: 100%;
           height: 160px;
           object-fit: cover;
         }
-
-        .student-card .content {
-          padding: 15px;
+        
+        .student-content {
+          padding: 1rem;
         }
-
-        .student-card h4 {
-          margin: 0 0 8px;
-          font-size: 18px;
-          color: #1a237e;
-        }
-
-        .student-card p {
-          margin: 0 0 10px;
-          font-size: 14px;
-          color: #64748b;
-        }
-
-        .badge {
-          padding: 5px 10px;
-          border-radius: 20px;
-          font-size: 0.75rem;
+        
+        .student-name {
+          font-size: 1rem;
           font-weight: 600;
-          text-transform: uppercase;
-          display: inline-block;
+          color: var(--dark-text);
+          margin: 0 0 0.5rem 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
-
-        .badge.active {
+        
+        .student-info {
+          font-size: 0.85rem;
+          color: var(--gray-text);
+          margin: 0 0 0.5rem 0;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+        
+        .student-email {
+          font-size: 0.8rem;
+          color: var(--gray-text);
+          margin: 0 0 1rem 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        .status-badge {
+          padding: 0.25rem 0.75rem;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          display: inline-block;
+          white-space: nowrap;
+          margin: 0 0 1rem 0;
+        }
+        
+        .status-active {
+          background: #d1fae5;
+          color: #065f46;
+        }
+        
+        .status-inactive {
+          background: #fee2e2;
+          color: #dc2626;
+        }
+        
+        .status-graduated {
+          background: #fef3c7;
+          color: #d97706;
+        }
+        
+        .status-pending {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+        
+        .student-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        
+        .action-btn {
+          padding: 0.5rem 0.75rem;
+          border-radius: var(--radius);
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          justify-content: center;
+          border: 1px solid;
+          background: transparent;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        
+        .view-btn {
+          border-color: var(--primary-color);
+          color: var(--primary-color);
+        }
+        
+        .view-btn:hover {
+          background: var(--primary-color);
+          color: white;
+        }
+        
+        .approve-btn {
+          border-color: #10b981;
+          color: #10b981;
+        }
+        
+        .approve-btn:hover {
           background: #10b981;
           color: white;
         }
-
-        .badge.inactive {
+        
+        .delete-btn {
+          border-color: #ef4444;
+          color: #ef4444;
+        }
+        
+        .delete-btn:hover {
           background: #ef4444;
           color: white;
         }
 
-        .badge.graduated {
-          background: #f59e0b;
-          color: white;
-        }
-
-        .badge.pending {
-          background: #1a237e;
-          color: white;
-        }
-
-        .actions {
+        /* Sidebar - Mobile First (hidden by default) */
+        .sidebar {
+          width: 280px;
+          background: var(--sidebar-bg);
+          color: #fff;
+          height: 100vh;
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 1030;
+          transition: transform 0.3s;
           display: flex;
-          gap: 8px;
-          margin-top: 10px;
-          flex-wrap: wrap;
+          flex-direction: column;
+          box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+          transform: translateX(-100%);
+          overflow: hidden;
         }
-
-        .actions button {
-          flex: 1;
-          border: none;
-          padding: 6px 8px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 13px;
-          transition: all 0.2s;
-          display: inline-flex;
+        
+        .sidebar.open {
+          transform: translateX(0);
+        }
+        
+        .sidebar-header {
+          padding: 1.25rem;
+          background: var(--sidebar-head);
+          text-align: center;
+          font-size: 1.25rem;
+          font-weight: 600;
+          height: 70px;
+          display: flex;
           align-items: center;
           justify-content: center;
-          gap: 4px;
-          min-width: 60px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          flex-shrink: 0;
+          white-space: nowrap;
+          overflow: hidden;
         }
-
-        .actions button:hover {
-          opacity: 0.9;
-          transform: translateY(-2px);
+        
+        .nav-links {
+          list-style: none;
+          padding: 1rem 0;
+          margin: 0;
+          flex-grow: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+          height: calc(100vh - 70px);
         }
-
-        .view-btn {
-          background: #1a237e;
+        
+        .nav-links::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .nav-links::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-links::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 4px;
+        }
+        
+        .nav-links li {
+          margin: 0.25rem 0.75rem;
+        }
+        
+        .nav-links li a {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 1rem;
+          color: rgba(255, 255, 255, 0.85);
+          text-decoration: none;
+          transition: all 0.3s;
+          border-radius: 8px;
+          font-weight: 500;
+          font-size: 14px;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        
+        .nav-links li.active a,
+        .nav-links li a:hover {
+          background: rgba(255, 255, 255, 0.15);
           color: #fff;
         }
 
-        .approve-btn {
-          background: #10b981;
-          color: #fff;
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 1029;
+          backdrop-filter: blur(3px);
+        }
+        
+        .sidebar-overlay.open {
+          display: block;
         }
 
-        .delete-btn {
-          background: #ef4444;
-          color: #fff;
+        /* Toast Notification */
+        .toast-notification {
+          position: fixed;
+          top: 1rem;
+          right: 1rem;
+          background: white;
+          border-radius: var(--radius);
+          padding: 1rem;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 1100;
+          animation: slideIn 0.3s ease-out;
+          max-width: 300px;
+          border-left: 4px solid;
         }
-
-        /* Responsive Breakpoints */
-        @media (max-width: 1200px) {
-          .sidebar {
-            width: 240px;
+        
+        .toast-notification.success {
+          border-left-color: #10b981;
+        }
+        
+        .toast-notification.warning {
+          border-left-color: #f59e0b;
+        }
+        
+        .toast-notification.info {
+          border-left-color: var(--primary-color);
+        }
+        
+        .toast-content {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        
+        .toast-content i {
+          font-size: 1.25rem;
+        }
+        
+        .toast-content i.fa-check-circle {
+          color: #10b981;
+        }
+        
+        .toast-content i.fa-exclamation-triangle {
+          color: #f59e0b;
+        }
+        
+        .toast-content i.fa-info-circle {
+          color: var(--primary-color);
+        }
+        
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
           }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
 
+        /* ========== SMALL TABLET (≥576px) ========== */
+        @media (min-width: 576px) {
           .main-content {
-            margin-left: 240px;
-            width: calc(100% - 240px);
+            padding: 0.75rem;
           }
+          
+          .kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+          }
+          
+          .welcome p {
+            display: block;
+          }
+          
+          .card-icon {
+            width: 56px;
+            height: 56px;
+          }
+          
+          .card-icon i {
+            font-size: 24px;
+          }
+          
+          .card-label {
+            font-size: 14px;
+          }
+          
+          .card-value {
+            font-size: 28px;
+          }
+          
+          .tabs {
+            flex-direction: row;
+            flex-wrap: wrap;
+          }
+          
+          .tab-btn {
+            width: auto;
+            min-width: 120px;
+          }
+          
+          .filter-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          
+          .students-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          
+          .student-actions {
+            flex-direction: row;
+            flex-wrap: wrap;
+          }
+          
+          .action-btn {
+            width: auto;
+            flex: 1;
+            min-width: 70px;
+          }
+        }
 
+        /* ========== TABLET (≥768px) ========== */
+        @media (min-width: 768px) {
+          .kpi-grid {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.25rem;
+          }
+          
+          .dashboard-card {
+            padding: 1.25rem;
+          }
+          
+          .filter-grid {
+            grid-template-columns: repeat(5, 1fr);
+          }
+          
+          .students-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        /* ========== DESKTOP (≥992px) ========== */
+        @media (min-width: 992px) {
+          .mobile-menu-toggle {
+            display: none !important;
+          }
+          
+          .desktop-menu-toggle {
+            display: flex !important;
+          }
+          
+          .sidebar {
+            transform: translateX(0);
+            width: 250px;
+          }
+          
           .sidebar.collapsed {
             width: 70px;
           }
-
-          .sidebar.collapsed ~ .main-content {
-            margin-left: 70px;
-            width: calc(100% - 70px);
-          }
-        }
-
-        @media (max-width: 992px) {
-          .sidebar {
-            transform: translateX(-100%);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-          }
-
-          .sidebar.open {
-            transform: translateX(0);
-          }
-
-          .main-content {
-            margin-left: 0 !important;
-            width: 100% !important;
-            padding: 15px;
-          }
-
-          .mobile-menu-btn {
-            display: flex;
-          }
-
-          .topbar {
-            padding: 1rem;
-            min-height: 70px;
-            margin-bottom: 1rem;
-          }
-
-          .welcome h1 {
-            font-size: 1.4rem;
-          }
-
-          .welcome p {
-            font-size: 0.85rem;
-          }
-
-          .dashboard-card {
-            padding: 15px;
-          }
-
-          .student-grid {
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          }
-        }
-
-        @media (max-width: 768px) {
-          .main-content {
-            padding: 12px;
-          }
-
-          .topbar {
-            padding: 0.9rem;
-            min-height: 60px;
-          }
-
-          .topbar h1 {
-            font-size: 1.3rem;
-          }
-
-          .topbar p {
+          
+          .sidebar.collapsed .sidebar-header span {
             display: none;
           }
-
-          .icon {
-            padding: 0.6rem;
-            font-size: 0.9rem;
+          
+          .sidebar.collapsed .nav-links li a span {
+            display: none;
           }
-
-          .user-avatar {
-            width: 36px;
-            height: 36px;
+          
+          .sidebar.collapsed .nav-links li a {
+            justify-content: center;
+            padding: 0.875rem;
           }
-
-          .mobile-menu-btn {
-            top: 15px;
-            left: 15px;
+          
+          .sidebar-overlay {
+            display: none !important;
+          }
+          
+          .main-content {
+            margin-left: 250px;
+            width: calc(100vw - 250px);
+            max-width: calc(100vw - 250px);
+            padding: 1rem 1.5rem;
+          }
+          
+          .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
+            width: calc(100vw - 70px);
+            max-width: calc(100vw - 70px);
+          }
+          
+          .topbar {
+            padding: 1rem 1.5rem;
+            margin: 0 0 1.5rem 0;
+          }
+          
+          .avatar-img {
             width: 40px;
             height: 40px;
-            font-size: 18px;
+            border: 3px solid #f8f9fa;
           }
-
-          .dashboard-card {
-            padding: 15px;
+          
+          .welcome p {
+            font-size: 0.9rem;
           }
-
-          .welcome h1 {
-            font-size: 1.2rem;
-          }
-
-          .student-grid {
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-          }
-
-          .tabs {
-            justify-content: center;
+          
+          .students-grid {
+            grid-template-columns: repeat(3, 1fr);
           }
         }
 
-        @media (max-width: 576px) {
+        /* ========== LARGE DESKTOP (≥1200px) ========== */
+        @media (min-width: 1200px) {
           .main-content {
-            padding: 10px;
+            padding: 1rem 2rem;
           }
+          
+          .students-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+          
+          .content-area {
+            max-width: 100%;
+          }
+        }
 
+        /* ========== EXTRA LARGE DESKTOP (≥1400px) ========== */
+        @media (min-width: 1400px) {
+          .main-content {
+            padding: 1.5rem 3rem;
+          }
+          
+          .students-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+        }
+
+        /* ========== EXTRA SMALL MOBILE (≤400px) ========== */
+        @media (max-width: 400px) {
+          .main-content {
+            padding: 0.25rem;
+          }
+          
           .topbar {
-            padding: 0.8rem;
-            min-height: 55px;
-          }
-
-          .topbar h1 {
-            font-size: 1.1rem;
-          }
-
-          .icon {
             padding: 0.5rem;
-            font-size: 0.85rem;
+            margin: 0 0 0.75rem 0;
           }
-
-          .user-avatar {
-            width: 32px;
-            height: 32px;
-          }
-
+          
+          .user-area i.fa-calendar-alt,
           .user-area i.fa-envelope {
             display: none !important;
           }
-
-          .mobile-menu-btn {
-            top: 12px;
-            left: 12px;
-            width: 36px;
-            height: 36px;
-            font-size: 16px;
-          }
-
-          .welcome h1 {
-            font-size: 1rem;
-          }
-
-          /* Cards responsive */
-          .row.g-3.mb-4 {
-            margin-bottom: 12px !important;
-          }
-
-          .dashboard-card {
-            padding: 12px;
-          }
-
-          .dashboard-card h3 {
-            font-size: 20px;
-          }
-
-          .tabs {
-            gap: 5px;
-          }
-
-          .tab-btn {
-            padding: 8px 12px;
-            font-size: 0.85rem;
-          }
-
-          .student-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .actions button {
-            padding: 5px 8px;
-            font-size: 12px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .main-content {
-            padding: 8px;
-          }
-
-          .topbar {
-            padding: 0.6rem;
-            min-height: 50px;
-          }
-
-          .topbar h1 {
-            font-size: 0.95rem;
-            max-width: 140px;
-          }
-
-          .user-avatar {
-            width: 30px;
-            height: 30px;
-          }
-
-          .mobile-menu-btn {
-            top: 10px;
-            left: 10px;
-            width: 34px;
-            height: 34px;
-            font-size: 14px;
-          }
-
-          .welcome h1 {
-            font-size: 0.95rem;
-          }
-
-          .dashboard-card h3 {
-            font-size: 18px;
-          }
-
-          .student-card h4 {
-            font-size: 16px;
-          }
-        }
-
-        @media (max-width: 360px) {
-          .main-content {
-            padding: 6px;
-          }
-
-          .topbar {
-            padding: 0.5rem;
-            min-height: 45px;
-          }
-
-          .topbar-left {
+          
+          .kpi-grid {
             gap: 0.5rem;
           }
-
-          .icon {
-            padding: 0.4rem;
-            width: 32px;
-            height: 32px;
+          
+          .dashboard-card {
+            padding: 0.75rem;
+            gap: 8px;
           }
-
-          .mobile-menu-btn {
-            width: 32px;
-            height: 32px;
-            top: 8px;
-            left: 8px;
+          
+          .card-icon {
+            padding: 8px;
+            width: 40px;
+            height: 40px;
           }
-
-          .welcome h1 {
-            font-size: 0.9rem;
-            max-width: 120px;
+          
+          .card-icon i {
+            font-size: 16px;
           }
-
-          .dashboard-card p {
+          
+          .card-value {
+            font-size: 20px;
+          }
+          
+          .card-label {
             font-size: 12px;
+          }
+          
+          .tabs-container {
+            padding: 0.75rem;
+          }
+          
+          .filter-section {
+            padding: 0.75rem;
+          }
+          
+          .student-avatar {
+            height: 140px;
+          }
+          
+          .student-content {
+            padding: 0.75rem;
+          }
+          
+          .student-name {
+            font-size: 0.9rem;
+          }
+          
+          .student-info {
+            font-size: 0.8rem;
+          }
+          
+          .student-email {
+            font-size: 0.75rem;
+          }
+          
+          .status-badge {
+            font-size: 0.7rem;
+          }
+          
+          .action-btn {
+            padding: 0.4rem 0.6rem;
+            font-size: 11px;
+          }
+        }
+
+        /* ========== VERY SMALL MOBILE (≤350px) ========== */
+        @media (max-width: 350px) {
+          .topbar-header {
+            gap: 0.5rem;
+          }
+          
+          .topbar-header h2 {
+            font-size: 1rem;
+          }
+          
+          .avatar-img {
+            width: 32px;
+            height: 32px;
+          }
+          
+          .dashboard-card {
+            flex-direction: row;
+            text-align: left;
+            align-items: center;
+            gap: 0.75rem;
+          }
+          
+          .card-icon {
+            flex-shrink: 0;
+          }
+          
+          .card-info {
+            flex: 1;
+            min-width: 0;
+          }
+          
+          .card-label {
+            text-align: left;
+          }
+          
+          .tab-btn {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+          }
+          
+          .student-avatar {
+            height: 120px;
+          }
+          
+          .student-name {
+            font-size: 0.85rem;
+          }
+        }
+        
+        /* ========== FIX FOR ALL MOBILE DEVICES ========== */
+        @media (max-width: 992px) {
+          .main-content {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            margin-left: 0 !important;
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+          }
+          
+          .content-area, .tabs-container, .filter-section, .students-grid {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          
+          .students-grid {
+            gap: 0.75rem;
+          }
+        }
+        
+        /* Animation */
+        .fade-in {
+          animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
       `}</style>
-    </div>
+
+      <div className="students-page">
+        {/* Overlay for mobile sidebar */}
+        <div
+          className={`sidebar-overlay ${mobileOpen ? "open" : ""}`}
+          onClick={() => setMobileOpen(false)}
+        />
+
+        {/* Sidebar */}
+        <aside
+          className={`sidebar ${collapsed ? "collapsed" : ""} ${
+            mobileOpen ? "open" : ""
+          }`}
+        >
+          <div className="sidebar-header">
+            <span>E-Learn</span>
+          </div>
+          <ul className="nav-links">
+            {menuItems.map((item) => (
+              <li key={item.link} className={item.active ? "active" : ""}>
+                <Link
+                  to={item.link}
+                  onClick={() =>
+                    window.innerWidth <= 992 && setMobileOpen(false)
+                  }
+                >
+                  <i className={item.icon}></i>
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        {/* Main content */}
+        <main className="main-content">
+          {/* Topbar */}
+          <div className="topbar">
+            <div className="d-flex align-items-center justify-content-between w-100">
+              <div className="topbar-header">
+                <div
+                  className="mobile-menu-toggle"
+                  onClick={toggleSidebar}
+                  aria-label="Toggle menu"
+                >
+                  <i className="fas fa-bars"></i>
+                </div>
+
+                <div
+                  className="desktop-menu-toggle"
+                  onClick={toggleSidebar}
+                  aria-label="Toggle sidebar"
+                >
+                  <i className="fas fa-bars"></i>
+                </div>
+
+                <div className="welcome">
+                  <h2 className="mb-0">
+                    <span className="d-none d-sm-inline">
+                      Student Dashboard
+                    </span>
+                    <span className="d-inline d-sm-none">Students</span>
+                  </h2>
+                  <p className="text-muted mb-0 small d-none d-md-block">
+                    Browse, filter and manage every student in the academy.
+                  </p>
+                </div>
+              </div>
+              <div className="user-area">
+                <div className="notification-badge position-relative">
+                  <i className="fas fa-bell fs-5"></i>
+                  <span className="badge-counter">3</span>
+                </div>
+                <i className="fas fa-calendar-alt d-none d-md-inline-block fs-5"></i>
+                <i className="fas fa-envelope d-none d-md-inline-block fs-5"></i>
+                <Link to="/managerProfile" className="d-inline-block">
+                  <img
+                    src="https://i.pravatar.cc/300?img=12"
+                    alt="Manager Avatar"
+                    className="avatar-img"
+                  />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="content-area">
+            {/* KPI Cards */}
+            <div className="kpi-grid">
+              <div className="dashboard-card fade-in">
+                <div className="card-icon">
+                  <i className="fas fa-user-graduate"></i>
+                </div>
+                <div className="card-info">
+                  <h3 className="card-label">Total Students</h3>
+                  <p className="card-value">{totalStudents}</p>
+                </div>
+              </div>
+
+              <div className="dashboard-card fade-in">
+                <div className="card-icon">
+                  <i className="fas fa-user-check"></i>
+                </div>
+                <div className="card-info">
+                  <h3 className="card-label">Active</h3>
+                  <p className="card-value">{activeStudents}</p>
+                </div>
+              </div>
+
+              <div className="dashboard-card fade-in">
+                <div className="card-icon">
+                  <i className="fas fa-user-times"></i>
+                </div>
+                <div className="card-info">
+                  <h3 className="card-label">Inactive</h3>
+                  <p className="card-value">{inactiveStudents}</p>
+                </div>
+              </div>
+
+              <div className="dashboard-card fade-in">
+                <div className="card-icon">
+                  <i className="fas fa-graduation-cap"></i>
+                </div>
+                <div className="card-info">
+                  <h3 className="card-label">Graduated</h3>
+                  <p className="card-value">{graduatedStudents}</p>
+                </div>
+              </div>
+
+              <div className="dashboard-card fade-in">
+                <div className="card-icon">
+                  <i className="fas fa-hourglass-half"></i>
+                </div>
+                <div className="card-info">
+                  <h3 className="card-label">Pending</h3>
+                  <p className="card-value">{pendingStudents}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="tabs-container fade-in">
+              <div className="tabs">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    className={`tab-btn ${
+                      filters.activeTab === tab.id ? "active" : ""
+                    }`}
+                    onClick={() => handleTabChange(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="filter-section fade-in">
+              <div className="filter-grid">
+                <select
+                  className="form-select"
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="graduated">Graduated</option>
+                  <option value="pending">Pending</option>
+                </select>
+                <select
+                  className="form-select"
+                  value={filters.course}
+                  onChange={(e) => handleFilterChange("course", e.target.value)}
+                >
+                  <option value="all">All Courses</option>
+                  <option value="selfpaced">Self-Paced</option>
+                  <option value="teacherled">Teacher-Led</option>
+                </select>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search by name, email, department..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange("search", e.target.value)}
+                />
+                <button className="search-btn" onClick={() => {}}>
+                  <i className="fas fa-search"></i> Search
+                </button>
+              </div>
+            </div>
+
+            {/* Students Grid */}
+            <div className="students-grid">
+              {filteredStudents.map((student) => (
+                <div className="student-card fade-in" key={student.id}>
+                  <img
+                    src={student.avatar}
+                    alt={student.name}
+                    className="student-avatar"
+                  />
+                  <div className="student-content">
+                    <h3 className="student-name">{student.name}</h3>
+                    <p className="student-info">
+                      <i className="fas fa-building me-1"></i>
+                      {student.dept} | {student.course}
+                    </p>
+                    <p className="student-email">
+                      <i className="fas fa-envelope me-1"></i>
+                      {student.email}
+                    </p>
+                    <span className={`status-badge status-${student.status}`}>
+                      {student.status.charAt(0).toUpperCase() +
+                        student.status.slice(1)}
+                    </span>
+                    <div className="student-actions">
+                      <button
+                        className="action-btn view-btn"
+                        onClick={() => handleViewStudent(student.id)}
+                      >
+                        <i className="fas fa-eye"></i> View
+                      </button>
+                      {student.status === "pending" && (
+                        <button
+                          className="action-btn approve-btn"
+                          onClick={() => handleApproveStudent(student.id)}
+                        >
+                          <i className="fas fa-check"></i> Approve
+                        </button>
+                      )}
+                      <button
+                        className="action-btn delete-btn"
+                        onClick={() => handleDeleteStudent(student.id)}
+                      >
+                        <i className="fas fa-trash"></i> Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    </>
   );
 };
 

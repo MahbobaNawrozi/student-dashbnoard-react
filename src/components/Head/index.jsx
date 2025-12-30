@@ -89,7 +89,6 @@ export default function Index() {
       --transition: all 0.3s ease;
     }
 
-    /* Reset body margins for mobile */
     * {
       box-sizing: border-box;
     }
@@ -104,16 +103,14 @@ export default function Index() {
       width: 100%;
     }
 
-    /* ========== MOBILE FIRST STYLES ========== */
-    /* Main Content Area - Mobile first */
     .main-content {
       width: 100%;
       min-height: 100vh;
       transition: var(--transition);
       padding: 0.5rem;
+      margin-left: 0;
     }
 
-    /* Topbar - Mobile first */
     .topbar {
       background: #fff;
       box-shadow: var(--shadow-light);
@@ -126,13 +123,33 @@ export default function Index() {
       width: 100%;
     }
 
-    .menu-toggle {
+    .topbar-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .mobile-menu-toggle {
       font-size: 1.25rem;
       cursor: pointer;
       color: var(--text);
       transition: var(--transition);
       padding: 0.5rem;
       border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .desktop-menu-toggle {
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: var(--text);
+      padding: 0.5rem;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      justify-content: center;
     }
 
     .user-area {
@@ -170,7 +187,6 @@ export default function Index() {
       transition: var(--transition);
     }
 
-    /* Stats Grid - Mobile first */
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -204,7 +220,6 @@ export default function Index() {
       line-height: 1;
     }
 
-    /* Section Cards - Mobile first */
     .section-card,
     .shortcuts,
     .performance,
@@ -231,7 +246,6 @@ export default function Index() {
       color: var(--accent);
     }
 
-    /* Table Styles */
     .table-wrapper {
       overflow-x: auto;
       border-radius: 8px;
@@ -276,7 +290,6 @@ export default function Index() {
       letter-spacing: 0.3px;
     }
 
-    /* Shortcut Buttons - Mobile first */
     .shortcut-btns {
       display: grid;
       grid-template-columns: 1fr;
@@ -310,7 +323,6 @@ export default function Index() {
       font-size: 0.85rem;
     }
 
-    /* Performance Section - Mobile first */
     .perf-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -352,7 +364,6 @@ export default function Index() {
       overflow: hidden;
     }
 
-    /* Events Section - Mobile first */
     .events ul {
       list-style: none;
       padding: 0;
@@ -396,28 +407,6 @@ export default function Index() {
       display: inline;
     }
 
-    /* Mobile Menu Button */
-    .mobile-menu-btn {
-      display: flex;
-      position: fixed;
-      top: 0.75rem;
-      left: 0.75rem;
-      z-index: 1040;
-      background: var(--accent);
-      color: white;
-      border: none;
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius);
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      transition: var(--transition);
-    }
-
-    /* Sidebar Styles - Mobile first (hidden by default) */
     .sidebar {
       width: 280px;
       background: var(--sidebar-bg);
@@ -493,7 +482,6 @@ export default function Index() {
       font-weight: 500;
     }
 
-    /* Overlay for mobile sidebar */
     .sidebar-overlay {
       display: none;
       position: fixed;
@@ -510,7 +498,6 @@ export default function Index() {
       display: block;
     }
 
-    /* ========== TABLET STYLES (576px and up) ========== */
     @media (min-width: 576px) {
       .main-content {
         padding: 0 0.75rem;
@@ -583,20 +570,15 @@ export default function Index() {
         min-width: 90px;
         padding: 0.4rem 0.875rem;
       }
-      
-      .mobile-menu-btn {
-        top: 1rem;
-        left: 1rem;
-        width: 44px;
-        height: 44px;
-        font-size: 1.25rem;
-      }
     }
 
-    /* ========== DESKTOP STYLES (992px and up) ========== */
     @media (min-width: 992px) {
-      .mobile-menu-btn {
-        display: none;
+      .mobile-menu-toggle {
+        display: none !important;
+      }
+      
+      .desktop-menu-toggle {
+        display: flex !important;
       }
       
       .sidebar {
@@ -640,7 +622,6 @@ export default function Index() {
         width: calc(100vw - 70px);
       }
       
-      /* Ensure all content inside main-content uses full available width */
       .topbar,
       .stats-grid,
       .section-card,
@@ -702,7 +683,6 @@ export default function Index() {
       }
     }
 
-    /* ========== LARGE DESKTOP STYLES (1200px and up) ========== */
     @media (min-width: 1200px) {
       .main-content {
         padding: 1rem 2rem;
@@ -721,7 +701,6 @@ export default function Index() {
       }
     }
 
-    /* ========== EXTRA LARGE DESKTOP (1400px and up) ========== */
     @media (min-width: 1400px) {
       .main-content {
         padding: 1rem 2.5rem;
@@ -732,7 +711,6 @@ export default function Index() {
       }
     }
 
-    /* ========== EXTRA SMALL MOBILE (≤400px) ========== */
     @media (max-width: 400px) {
       .main-content {
         padding: 0 0.25rem;
@@ -769,16 +747,8 @@ export default function Index() {
         font-size: 0.7rem;
         padding: 0.25rem 0.5rem;
       }
-      
-      .mobile-menu-btn {
-        top: 0.5rem;
-        left: 0.5rem;
-        width: 36px;
-        height: 36px;
-      }
     }
 
-    /* Animation */
     .fade-in {
       animation: fadeIn 0.5s ease-out;
     }
@@ -794,26 +764,16 @@ export default function Index() {
       }
     }
   `;
+
   return (
     <>
       <style>{css}</style>
 
-      {/* Mobile menu button */}
-      <button
-        className="mobile-menu-btn"
-        onClick={toggleSidebar}
-        aria-label="Toggle menu"
-      >
-        <i className="fas fa-bars"></i>
-      </button>
-
-      {/* Overlay for mobile sidebar */}
       <div
         className={`sidebar-overlay ${mobileOpen ? "open" : ""}`}
         onClick={() => setMobileOpen(false)}
       />
 
-      {/* Sidebar */}
       <aside
         className={`sidebar ${collapsed ? "collapsed" : ""} ${
           mobileOpen ? "open" : ""
@@ -846,19 +806,27 @@ export default function Index() {
         </ul>
       </aside>
 
-      {/* Main content */}
       <main className="main-content">
-        {/* Topbar */}
         <div className="topbar">
           <div className="d-flex align-items-center justify-content-between w-100">
-            <div className="d-flex align-items-center">
+            <div className="topbar-header">
               <div
-                className="menu-toggle d-none d-lg-flex"
+                className="mobile-menu-toggle"
                 onClick={toggleSidebar}
+                aria-label="Toggle menu"
               >
                 <i className="fas fa-bars"></i>
               </div>
-              <h2 className="mb-0 ms-2 ms-sm-3">
+
+              <div
+                className="desktop-menu-toggle"
+                onClick={toggleSidebar}
+                aria-label="Toggle sidebar"
+              >
+                <i className="fas fa-bars"></i>
+              </div>
+
+              <h2 className="mb-0">
                 <span className="d-none d-md-inline">Department Dashboard</span>
                 <span className="d-inline d-md-none">Dashboard</span>
               </h2>
@@ -881,7 +849,6 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="stats-grid fade-in">
           <div className="stat-card">
             <div className="stat-title">Total Teachers</div>
@@ -909,7 +876,6 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Courses Overview */}
         <div className="section-card fade-in">
           <div className="section-title">
             <i className="fas fa-book-open"></i>
@@ -975,7 +941,6 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Quick Shortcuts */}
         <div className="shortcuts fade-in">
           <div className="section-title">
             <i className="fas fa-bolt"></i>
@@ -1013,7 +978,6 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Performance Summary */}
         <div className="performance fade-in">
           <div className="section-title">
             <i className="fas fa-chart-line"></i>
@@ -1063,7 +1027,6 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Upcoming Events */}
         <div className="events fade-in">
           <div className="section-title">
             <i className="fas fa-calendar-day"></i>

@@ -1,73 +1,69 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const ManagerSettings = () => {
-  const location = useLocation();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Sidebar state - match GradesPage structure
+  const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Settings state
   const [profileName, setProfileName] = useState("Manager Account");
   const [firstName, setFirstName] = useState("Manager");
   const [lastName, setLastName] = useState("Account");
   const [avatarText, setAvatarText] = useState("MA");
   const [avatarBackground, setAvatarBackground] = useState("");
-  const [selectedTheme, setSelectedTheme] = useState("#2563eb");
+  const [selectedTheme, setSelectedTheme] = useState("#1a237e");
   const [customColor, setCustomColor] = useState("");
   const [language, setLanguage] = useState("en");
   const [rtlLayout, setRtlLayout] = useState(false);
 
+  const toggleSidebar = () => {
+    if (window.innerWidth <= 992) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setCollapsed(!collapsed);
+    }
+  };
+
+  useEffect(() => {
+    const onResize = () => {
+      const shouldCollapse = window.innerWidth <= 992;
+      setCollapsed(shouldCollapse);
+      if (window.innerWidth > 992) {
+        setMobileOpen(false);
+      }
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Menu items - updated with consistent naming
   const menuItems = [
-    { icon: "fas fa-tachometer-alt", label: "Dashboard", link: "/dashboard" },
+    { icon: "fas fa-tachometer-alt", label: "Dashboard", link: "/" },
     { icon: "fas fa-layer-group", label: "Departments", link: "/departments" },
     { icon: "fas fa-book", label: "Courses", link: "/courses" },
-    { icon: "fas fa-chalkboard-teacher", label: "Heads", link: "/head" },
+    { icon: "fas fa-chalkboard-teacher", label: "Heads", link: "/heads" },
     { icon: "fas fa-chalkboard-teacher", label: "Teachers", link: "/teachers" },
     { icon: "fas fa-user-graduate", label: "Students", link: "/students" },
     { icon: "fas fa-tasks", label: "Assignments", link: "/assignments" },
     { icon: "fas fa-graduation-cap", label: "Grades", link: "/grades" },
-    { icon: "fas fa-certificate", label: "Certificates", link: "/certificate" },
-    { icon: "fas fa-chart-line", label: "Announcement", link: "/announcement" },
-    { icon: "fas fa-chart-pie", label: "Analytics", link: "/analytic" },
+    {
+      icon: "fas fa-bullhorn",
+      label: "Announcements",
+      link: "/announcements",
+    },
+    {
+      icon: "fas fa-certificate",
+      label: "Certificates",
+      link: "/certificates",
+    },
+    { icon: "fas fa-chart-pie", label: "Analytics", link: "/analytics" },
     { icon: "fas fa-chart-line", label: "Reports", link: "/reports" },
-    { icon: "fas fa-cog", label: "Settings", link: "/settings" },
+    { icon: "fas fa-cog", label: "Settings", link: "/settings", active: true },
     { icon: "fas fa-sign-out-alt", label: "Logout", link: "#" },
   ];
 
-  // --------------  SIDEBAR TOGGLE LOGIC --------------
-  const toggleDesktopSidebar = () => setSidebarCollapsed((s) => !s);
-  const toggleMobileSidebar = () => setSidebarOpen((s) => !s);
-
-  const handleMenuItemClick = () => {
-    if (window.innerWidth <= 992) setSidebarOpen(false);
-  };
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 992) setSidebarOpen(false);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (window.innerWidth <= 992) {
-        const sidebar = document.querySelector(".sidebar");
-        const mobileBtn = document.querySelector(".mobile-menu-btn");
-        if (
-          sidebar &&
-          !sidebar.contains(e.target) &&
-          mobileBtn &&
-          !mobileBtn.contains(e.target)
-        ) {
-          setSidebarOpen(false);
-        }
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
-
-  // --------------  SETTINGS FUNCTIONS --------------
+  // Settings functions
   const updateProfilePic = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -113,18 +109,44 @@ const ManagerSettings = () => {
   };
 
   const saveSettings = () => {
-    alert("Settings saved successfully!");
+    const toastEl = document.createElement("div");
+    toastEl.className = "toast-notification success";
+    toastEl.innerHTML = `
+      <div class="toast-content">
+        <i class="fas fa-check-circle"></i>
+        <span>Settings saved successfully!</span>
+      </div>
+    `;
+
+    document.body.appendChild(toastEl);
+
+    setTimeout(() => {
+      toastEl.remove();
+    }, 3000);
   };
 
   const resetSettings = () => {
-    if (confirm("Reset all settings to default?")) {
+    if (window.confirm("Reset all settings to default?")) {
       window.location.reload();
     }
   };
 
   const deleteAccount = () => {
-    if (confirm("Delete your account? This cannot be undone.")) {
-      alert("Account deletion requested. Please contact support.");
+    if (window.confirm("Delete your account? This cannot be undone.")) {
+      const toastEl = document.createElement("div");
+      toastEl.className = "toast-notification warning";
+      toastEl.innerHTML = `
+        <div class="toast-content">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>Account deletion requested. Please contact support.</span>
+        </div>
+      `;
+
+      document.body.appendChild(toastEl);
+
+      setTimeout(() => {
+        toastEl.remove();
+      }, 3000);
     }
   };
 
@@ -132,947 +154,220 @@ const ManagerSettings = () => {
     updateProfileName();
   }, [firstName, lastName]);
 
-  // --------------  RENDER --------------
   return (
-    <div className="manager-settings">
-      {/* Mobile hamburger */}
-      <button className="mobile-menu-btn" onClick={toggleMobileSidebar}>
-        <i className="fas fa-bars"></i>
-      </button>
-
-      {/* Sidebar */}
-      <aside
-        className={`sidebar ${sidebarCollapsed ? "collapsed" : ""} ${
-          sidebarOpen ? "open" : ""
-        }`}
-      >
-        <div className="sidebar-header">E-Learn</div>
-        <ul className="menu">
-          {menuItems.map((item) => (
-            <li
-              key={item.link}
-              className={location.pathname === item.link ? "active" : ""}
-            >
-              <Link to={item.link} onClick={handleMenuItemClick}>
-                <i className={item.icon}></i>
-                <span>{item.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </aside>
-
-      {/* Main content */}
-      <main className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        {/* Topbar */}
-        <header className="topbar">
-          <div className="topbar-left">
-            <div className="icon menu-toggle" onClick={toggleDesktopSidebar}>
-              <i className="fas fa-bars"></i>
-            </div>
-            <div className="welcome">
-              <h1 className="h5 mb-0 fw-bold">Manager Settings</h1>
-              <p className="text-muted mb-0 small d-none d-md-block">
-                Manage your profile, preferences and security settings.
-              </p>
-            </div>
-          </div>
-
-          <div className="user-area">
-            <div className="icon position-relative">
-              <i className="fas fa-bell"></i>
-              <span className="badge">3</span>
-            </div>
-            <div className="icon d-none d-md-flex">
-              <i className="fas fa-envelope"></i>
-            </div>
-            <Link to="/settings" className="user-avatar-link">
-              <img
-                src="https://i.pravatar.cc/100?img=12"
-                alt="Manager Avatar"
-                className="user-avatar"
-              />
-            </Link>
-          </div>
-        </header>
-
-        {/* Settings Content */}
-        <div className="content-area">
-          {/* Profile Settings */}
-          <div className="data-section">
-            <h2 className="section-title">Profile Settings</h2>
-            <div className="profile-section">
-              <div className="avatar-container">
-                <div
-                  className="avatar"
-                  style={{
-                    backgroundImage: avatarBackground,
-                    backgroundSize: "cover",
-                    backgroundColor: avatarBackground
-                      ? "transparent"
-                      : "var(--primary-color)",
-                  }}
-                >
-                  {avatarText}
-                </div>
-                <button
-                  className="avatar-upload"
-                  onClick={() => document.getElementById("profilePic").click()}
-                >
-                  📷
-                </button>
-                <input
-                  type="file"
-                  id="profilePic"
-                  style={{ display: "none" }}
-                  accept="image/*"
-                  onChange={updateProfilePic}
-                />
-              </div>
-              <div className="profile-info">
-                <h3>{profileName}</h3>
-                <p>admin@academyhub.com</p>
-                <p>Role: Platform Manager</p>
-                <p>Member since: January 2023</p>
-              </div>
-            </div>
-
-            <div className="grid">
-              <div>
-                <div className="form-group">
-                  <label>First Name</label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="clean-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Last Name</label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="clean-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Display Name</label>
-                  <input
-                    type="text"
-                    value={profileName}
-                    readOnly
-                    className="clean-input"
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="form-group">
-                  <label>Phone Number</label>
-                  <input
-                    type="text"
-                    value="+1 234 567 8900"
-                    className="clean-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Bio</label>
-                  <textarea
-                    defaultValue="Platform administrator managing the e-learning system and overseeing all operations."
-                    className="clean-textarea"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Location</label>
-                  <input
-                    type="text"
-                    value="New York, USA"
-                    className="clean-input"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Theme Colors */}
-          <div className="data-section">
-            <h2 className="section-title">Theme Colors</h2>
-            <div className="form-group">
-              <label>Choose Primary Color Theme</label>
-              <div className="color-picker">
-                <div
-                  className={`color-option ${
-                    selectedTheme === "#2563eb" ? "selected" : ""
-                  }`}
-                  style={{ background: "#2563eb" }}
-                  onClick={() => selectTheme("#2563eb")}
-                ></div>
-                <div
-                  className={`color-option ${
-                    selectedTheme === "#dc2626" ? "selected" : ""
-                  }`}
-                  style={{ background: "#dc2626" }}
-                  onClick={() => selectTheme("#dc2626")}
-                ></div>
-                <div
-                  className={`color-option ${
-                    selectedTheme === "#16a34a" ? "selected" : ""
-                  }`}
-                  style={{ background: "#16a34a" }}
-                  onClick={() => selectTheme("#16a34a")}
-                ></div>
-                <div
-                  className={`color-option ${
-                    selectedTheme === "#f59e0b" ? "selected" : ""
-                  }`}
-                  style={{ background: "#f59e0b" }}
-                  onClick={() => selectTheme("#f59e0b")}
-                ></div>
-                <div
-                  className={`color-option ${
-                    selectedTheme === "#8b5cf6" ? "selected" : ""
-                  }`}
-                  style={{ background: "#8b5cf6" }}
-                  onClick={() => selectTheme("#8b5cf6")}
-                ></div>
-                <div
-                  className={`color-option ${
-                    selectedTheme === "#ec4899" ? "selected" : ""
-                  }`}
-                  style={{ background: "#ec4899" }}
-                  onClick={() => selectTheme("#ec4899")}
-                ></div>
-                <div
-                  className={`color-option ${
-                    selectedTheme === "#06b6d4" ? "selected" : ""
-                  }`}
-                  style={{ background: "#06b6d4" }}
-                  onClick={() => selectTheme("#06b6d4")}
-                ></div>
-              </div>
-              <div
-                className="theme-preview"
-                style={{ background: selectedTheme }}
-              >
-                Preview of Selected Theme
-              </div>
-            </div>
-            <div className="form-group">
-              <label>Custom Color (Hex)</label>
-              <input
-                type="text"
-                placeholder="#2563eb"
-                value={customColor}
-                onChange={(e) => setCustomColor(e.target.value)}
-                onBlur={applyCustomColor}
-                className="clean-input"
-              />
-            </div>
-          </div>
-
-          {/* Display & Language */}
-          <div className="data-section">
-            <h2 className="section-title">Display & Language</h2>
-            <div className="grid">
-              <div>
-                <div className="form-group">
-                  <label>Display Mode</label>
-                  <div
-                    style={{ display: "flex", gap: "20px", marginTop: "8px" }}
-                  >
-                    <label
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        fontWeight: "normal",
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="displayMode"
-                        value="light"
-                        defaultChecked
-                      />{" "}
-                      Light
-                    </label>
-                    <label
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        fontWeight: "normal",
-                      }}
-                    >
-                      <input type="radio" name="displayMode" value="dark" />{" "}
-                      Dark
-                    </label>
-                    <label
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        fontWeight: "normal",
-                      }}
-                    >
-                      <input type="radio" name="displayMode" value="auto" />{" "}
-                      Auto
-                    </label>
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>Language</label>
-                  <select
-                    value={language}
-                    onChange={(e) => handleLanguageChange(e.target.value)}
-                    className="clean-select"
-                  >
-                    <option value="en">English</option>
-                    <option value="fa">فارسی (Persian)</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>RTL Layout (for Persian)</label>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={rtlLayout}
-                      onChange={(e) => setRtlLayout(e.target.checked)}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <div className="form-group">
-                  <label>Font Size</label>
-                  <select className="clean-select">
-                    <option value="small">Small</option>
-                    <option value="medium" selected>
-                      Medium
-                    </option>
-                    <option value="large">Large</option>
-                    <option value="extra-large">Extra Large</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Compact Mode</label>
-                  <label className="toggle-switch">
-                    <input type="checkbox" />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Notification Settings */}
-          <div className="data-section">
-            <h2 className="section-title">Notification Settings</h2>
-            <div className="grid">
-              <div>
-                <h3>Email Notifications</h3>
-                <div className="form-group">
-                  <label>New user registration</label>
-                  <label className="toggle-switch">
-                    <input type="checkbox" defaultChecked />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-                <div className="form-group">
-                  <label>Course enrollment alerts</label>
-                  <label className="toggle-switch">
-                    <input type="checkbox" defaultChecked />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-                <div className="form-group">
-                  <label>Revenue reports</label>
-                  <label className="toggle-switch">
-                    <input type="checkbox" defaultChecked />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <h3>In-App Notifications</h3>
-                <div className="form-group">
-                  <label>System alerts</label>
-                  <label className="toggle-switch">
-                    <input type="checkbox" defaultChecked />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-                <div className="form-group">
-                  <label>Maintenance reminders</label>
-                  <label className="toggle-switch">
-                    <input type="checkbox" />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-                <div className="form-group">
-                  <label>Weekly summary</label>
-                  <label className="toggle-switch">
-                    <input type="checkbox" defaultChecked />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div className="form-group">
-              <label>Notification Email</label>
-              <input
-                type="email"
-                defaultValue="notifications@academyhub.com"
-                className="clean-input"
-              />
-            </div>
-          </div>
-
-          {/* Account Security */}
-          <div className="data-section">
-            <h2 className="section-title">Account Security</h2>
-            <div className="grid">
-              <div>
-                <div className="form-group">
-                  <label>Current Password</label>
-                  <input type="password" className="clean-input" />
-                </div>
-                <div className="form-group">
-                  <label>New Password</label>
-                  <input type="password" className="clean-input" />
-                </div>
-                <div className="form-group">
-                  <label>Confirm New Password</label>
-                  <input type="password" className="clean-input" />
-                </div>
-              </div>
-              <div>
-                <div className="form-group">
-                  <label>Two-Factor Authentication</label>
-                  <label className="toggle-switch">
-                    <input type="checkbox" />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-                <div className="form-group">
-                  <label>Login Notifications</label>
-                  <label className="toggle-switch">
-                    <input type="checkbox" defaultChecked />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-                <div className="form-group">
-                  <label>Session Timeout (minutes)</label>
-                  <input
-                    type="number"
-                    defaultValue="30"
-                    min="5"
-                    max="1440"
-                    className="clean-input"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="actions">
-            <button className="primary" onClick={saveSettings}>
-              Save Changes
-            </button>
-            <button onClick={resetSettings}>Reset to Default</button>
-            <button className="danger" onClick={deleteAccount}>
-              Delete Account
-            </button>
-          </div>
-        </div>
-      </main>
-
-      <style jsx global>{`
-        /* ========== GLOBAL RESET & PREVENT HORIZONTAL SCROLL ========== */
+    <>
+      <style>{`
+        :root {
+          --sidebar-bg: #1a237e;
+          --sidebar-head: #1a237e;
+          --accent: #1a237e;
+          --text: #333;
+          --text-light: #555;
+          --border: #eee;
+          --card-bg: #fff;
+          --shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+          --radius: 8px;
+          --light-bg: #f5f6fa;
+          --dark-text: #1e293b;
+          --gray-text: #64748b;
+          --primary-color: #1a237e;
+          --secondary-color: #38bdf8;
+        }
+        
         * {
           box-sizing: border-box;
           margin: 0;
           padding: 0;
         }
-
-        html,
+        
         body {
-          max-width: 100%;
+          background: var(--light-bg);
+          color: var(--text);
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           overflow-x: hidden;
           width: 100vw;
+          max-width: 100%;
         }
-
-        body {
-          font-family: "Poppins", sans-serif;
-          background: #f4f7fb;
-          color: #1e293b;
+        
+        /* ========== MAIN CONTAINER ========== */
+        .settings-page {
+          min-height: 100vh;
+          background: var(--light-bg);
+          position: relative;
+          width: 100vw;
+          max-width: 100%;
+          overflow-x: hidden;
         }
-
-        /* ========== ROOT VARIABLES ========== */
-        :root {
-          --primary-color: #1a237e;
-          --secondary-color: #38bdf8;
-          --light-bg: #f4f7fb;
-          --dark-text: #1e293b;
-          --gray-text: #64748b;
-          --card-bg: #ffffff;
-          --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-          --radius: 10px;
+        
+        /* ========== MOBILE FIRST STYLES ========== */
+        /* Main Content - Mobile First */
+        .main-content {
+          width: 100vw;
+          max-width: 100%;
+          min-height: 100vh;
+          transition: all 0.3s;
+          padding: 0.5rem;
+          margin-left: 0;
+          background: var(--light-bg);
+          overflow-x: hidden;
+          position: relative;
         }
-
-        /* ========== SIDEBAR (FIXED WIDTH - NO SCROLL) ========== */
-        .sidebar {
-          width: 260px;
-          background: linear-gradient(180deg, var(--primary-color), #1a237e);
-          color: #fff;
-          height: 100vh;
-          position: fixed;
-          top: 0;
-          left: 0;
-          z-index: 1030;
-          transition: width 0.3s, transform 0.3s;
+        
+        /* Topbar - Mobile First */
+        .topbar {
+          background: #fff;
+          box-shadow: var(--shadow);
+          border-radius: var(--radius);
+          padding: 0.75rem;
+          margin: 0 0 1rem 0;
+          position: sticky;
+          top: 0.5rem;
+          z-index: 1020;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        
+        .topbar-header {
           display: flex;
-          flex-direction: column;
-          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-          overflow-y: auto;
-          overflow-x: hidden; /* Prevent horizontal scroll in sidebar */
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+          align-items: center;
+          gap: 0.75rem;
+          width: 100%;
         }
-
-        .sidebar::-webkit-scrollbar {
-          display: none;
-        }
-
-        .sidebar.collapsed {
-          width: 70px;
-        }
-
-        .sidebar-header {
-          padding: 1.2rem;
-          background: rgba(255, 255, 255, 0.1);
-          text-align: center;
-          font-size: 1.4rem;
-          font-weight: 600;
+        
+        .mobile-menu-toggle {
+          font-size: 1.25rem;
+          cursor: pointer;
+          color: var(--text);
+          padding: 0.5rem;
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          height: 60px;
-          transition: all 0.3s;
-          white-space: nowrap;
-          overflow: hidden;
         }
-
-        .sidebar.collapsed .sidebar-header {
-          font-size: 0;
-          padding: 1.2rem 0;
-        }
-
-        .menu {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-          flex-grow: 1;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .menu li a {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 0.9rem 1.5rem;
-          color: #e2e8f0;
-          text-decoration: none;
-          transition: all 0.3s;
-          border-left: 4px solid transparent;
-          white-space: nowrap;
-          overflow: hidden;
-        }
-
-        .menu li a:hover,
-        .menu li.active a {
-          background: rgba(255, 255, 255, 0.15);
-          border-left-color: var(--secondary-color);
-          color: #fff;
-        }
-
-        .sidebar.collapsed .menu li a {
-          padding: 0.9rem;
-          justify-content: center;
-        }
-
-        .sidebar.collapsed .menu li a span {
-          display: none;
-        }
-
-        .main-content {
-          margin-left: 260px;
-          min-height: 100vh;
-          transition: margin-left 0.3s;
-          padding: 20px;
-          width: calc(100vw - 260px);
-          box-sizing: border-box;
-          overflow-y: auto;
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .main-content::-webkit-scrollbar {
-          display: none;
-        }
-        .sidebar.collapsed ~ .main-content {
-          margin-left: 70px;
-          width: calc(100vw - 70px);
-        }
-
-        .mobile-menu-btn {
-          display: none;
-          position: fixed;
-          top: 15px;
-          left: 15px;
-          z-index: 1040;
-          background: var(--primary-color);
-          color: #fff;
-          border: none;
-          width: 40px;
-          height: 40px;
-          border-radius: 8px;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
+        
+        .desktop-menu-toggle {
+          font-size: 1.25rem;
           cursor: pointer;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        /* ========== TOPBAR (FIXED WIDTH) ========== */
-        .topbar {
-          display: flex;
-          justify-content: space-between;
+          color: var(--text);
+          padding: 0.5rem;
+          border-radius: 8px;
+          display: none;
           align-items: center;
-          padding: 1rem 1.5rem;
-          min-height: 60px;
-          background: var(--card-bg);
-          border-radius: var(--radius);
-          box-shadow: var(--shadow);
-          margin-bottom: 1.5rem;
-          width: 100%;
-          max-width: 100%; /* Prevent overflow */
-          box-sizing: border-box;
-          gap: 15px;
-          overflow: hidden; /* Hide any overflow */
+          justify-content: center;
+          flex-shrink: 0;
         }
-
-        .topbar-left {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
+        
+        .welcome {
           flex: 1;
           min-width: 0;
         }
-
-        .welcome {
-          min-width: 0;
-        }
-
-        .welcome h1 {
-          font-size: 1.4rem;
-          color: var(--dark-text);
+        
+        .welcome h2 {
+          font-size: 1.25rem;
+          font-weight: 600;
           margin: 0;
+          color: var(--dark-text);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          max-width: 100%;
         }
-
+        
         .welcome p {
           font-size: 0.85rem;
           color: var(--gray-text);
-          margin: 2px 0 0;
+          margin: 0.25rem 0 0 0;
+          display: none;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
         }
-
-        .icon {
-          background: #eff6ff;
-          color: var(--primary-color);
-          width: 40px;
-          height: 40px;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: 0.3s;
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-        }
-
-        .icon:hover {
-          background: var(--primary-color);
-          color: #fff;
-        }
-
-        .badge {
-          position: absolute;
-          top: -4px;
-          right: -4px;
-          background: #ef4444;
-          color: #fff;
-          border-radius: 50%;
-          width: 16px;
-          height: 16px;
-          font-size: 0.65rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
+        
         .user-area {
           display: flex;
           align-items: center;
           gap: 0.75rem;
           flex-shrink: 0;
         }
-
-        .user-avatar {
-          width: 40px;
-          height: 40px;
+        
+        .notification-badge {
+          position: relative;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+        
+        .badge-counter {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background: #e74c3c;
+          color: white;
+          font-size: 0.6rem;
+          width: 18px;
+          height: 18px;
           border-radius: 50%;
-          border: 2px solid var(--primary-color);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .avatar-img {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
           object-fit: cover;
+          border: 2px solid #f8f9fa;
           flex-shrink: 0;
         }
 
-        /* ========== CONTENT SECTIONS (NO OVERFLOW) ========== */
+        /* Content Area - Mobile First */
         .content-area {
           width: 100%;
+          padding: 0;
+          background: transparent;
           max-width: 100%;
-          box-sizing: border-box;
+          overflow-x: hidden;
         }
 
-        .data-section {
+        /* Settings Sections - Mobile First */
+        .settings-section {
           background: var(--card-bg);
           border-radius: var(--radius);
-          padding: 20px;
-          margin-bottom: 30px;
+          padding: 1rem;
+          margin: 0 0 1.5rem 0;
           box-shadow: var(--shadow);
           width: 100%;
           max-width: 100%;
+          border: 1px solid rgba(0, 0, 0, 0.05);
           box-sizing: border-box;
         }
-
+        
         .section-title {
-          font-size: 18px;
-          color: var(--dark-text);
-          margin: 0 0 15px;
-          font-weight: 600;
-        }
-
-        /* ========== GRID SYSTEM (RESPONSIVE) ========== */
-        .grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 20px;
-          max-width: 100%;
-          box-sizing: border-box;
-        }
-
-        .kpi-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-          gap: 20px;
-          margin-bottom: 30px;
-          max-width: 100%;
-          box-sizing: border-box;
-        }
-
-        /* ========== TABLE CONTAINER (HORIZONTAL SCROLL ONLY WHEN NEEDED) ========== */
-        .table-container {
-          overflow-x: auto;
-          border-radius: 8px;
-          border: 1px solid #e2e8f0;
-          width: 100%;
-          max-width: 100%;
-          box-sizing: border-box;
-          -webkit-overflow-scrolling: touch;
-        }
-
-        .table {
-          width: 100%;
-          border-collapse: collapse;
-          min-width: 600px;
-          max-width: 100%;
-          box-sizing: border-box;
-        }
-
-        .table th,
-        .table td {
-          padding: 12px 16px;
-          text-align: left;
-          font-size: 14px;
-          white-space: nowrap;
-        }
-
-        .table th {
-          background: #f8fafc;
+          font-size: 1.1rem;
           font-weight: 600;
           color: var(--dark-text);
-          border-bottom: 2px solid #e2e8f0;
+          margin: 0 0 1rem 0;
+          padding-bottom: 0.75rem;
+          border-bottom: 1px solid var(--border);
         }
-
-        .table td {
-          border-bottom: 1px solid #e2e8f0;
-          color: var(--gray-text);
-        }
-
-        .table tbody tr:hover {
-          background-color: #f9fafb;
-        }
-
-        .table tbody tr:last-child td {
-          border-bottom: none;
-        }
-
-        .text-center {
-          text-align: center !important;
-        }
-
-        /* ========== FORM ELEMENTS (CLEAN INPUTS) ========== */
-        .form-group {
-          margin-bottom: 15px;
-          max-width: 100%;
-        }
-
-        label {
-          display: block;
-          margin-bottom: 6px;
-          font-weight: 500;
-          font-size: 0.9rem;
-        }
-
-        .clean-input,
-        .clean-textarea,
-        .clean-select {
-          width: 100%;
-          padding: 8px 12px;
-          border: 1px solid #d1d5db;
-          border-radius: 8px;
-          font-size: 0.9rem;
-          background: #ffffff !important;
-          color: #1f2937 !important;
-          box-sizing: border-box;
-          max-width: 100%;
-        }
-
-        .clean-input:focus,
-        .clean-textarea:focus,
-        .clean-select:focus {
-          outline: none;
-          border-color: var(--primary-color);
-          box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.1);
-        }
-
-        .clean-textarea {
-          resize: vertical;
-          min-height: 80px;
-        }
-
-        /* ========== TOGGLE SWITCH ========== */
-        .toggle-switch {
-          position: relative;
-          display: inline-block;
-          width: 44px;
-          height: 24px;
-        }
-
-        .toggle-switch input {
-          opacity: 0;
-          width: 0;
-          height: 0;
-        }
-
-        .slider {
-          position: absolute;
-          cursor: pointer;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: #d1d5db;
-          transition: 0.3s;
-          border-radius: 24px;
-        }
-
-        .slider:before {
-          position: absolute;
-          content: "";
-          height: 18px;
-          width: 18px;
-          left: 3px;
-          bottom: 3px;
-          background-color: #fff;
-          transition: 0.3s;
-          border-radius: 50%;
-        }
-
-        input:checked + .slider {
-          background-color: var(--primary-color);
-        }
-
-        input:checked + .slider:before {
-          transform: translateX(20px);
-        }
-
-        /* ========== BUTTONS ========== */
-        .actions {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-          margin-top: 20px;
-          max-width: 100%;
-        }
-
-        button {
-          padding: 8px 14px;
-          border: 1px solid #d1d5db;
-          border-radius: 8px;
-          background: #fff;
-          font-size: 0.9rem;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        button.primary {
-          background: var(--primary-color);
-          color: #fff;
-          border: none;
-        }
-
-        button.primary:hover {
-          background: #1a237e;
-        }
-
-        button.danger {
-          background: #ef4444;
-          color: #fff;
-          border: none;
-        }
-
-        /* ========== PROFILE SECTION ========== */
+        
+        /* Profile Section - Mobile First */
         .profile-section {
           display: flex;
-          align-items: center;
-          gap: 20px;
-          margin-bottom: 20px;
-          max-width: 100%;
+          flex-direction: column;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
         }
-
+        
         .avatar-container {
           position: relative;
           display: inline-block;
+          align-self: center;
         }
-
+        
         .avatar {
           width: 100px;
           height: 100px;
@@ -1087,12 +382,12 @@ const ManagerSettings = () => {
           cursor: pointer;
           transition: opacity 0.3s;
         }
-
+        
         .avatar:hover {
           opacity: 0.8;
         }
-
-        .avatar-upload {
+        
+        .avatar-upload-btn {
           position: absolute;
           bottom: 5px;
           right: 5px;
@@ -1107,27 +402,75 @@ const ManagerSettings = () => {
           justify-content: center;
           cursor: pointer;
           font-size: 1rem;
+          z-index: 2;
         }
-
+        
+        .profile-info {
+          text-align: center;
+        }
+        
         .profile-info h3 {
-          margin-bottom: 5px;
+          font-size: 1.25rem;
+          color: var(--dark-text);
+          margin-bottom: 0.5rem;
         }
-
+        
         .profile-info p {
           color: var(--gray-text);
           font-size: 0.9rem;
-          margin-bottom: 3px;
+          margin-bottom: 0.25rem;
         }
-
-        /* ========== THEME COLORS ========== */
-        .color-picker {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-          margin-top: 10px;
+        
+        /* Grid System - Mobile First */
+        .settings-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        
+        .form-group {
+          margin-bottom: 1rem;
+        }
+        
+        .form-label {
+          display: block;
+          font-size: 0.9rem;
+          font-weight: 500;
+          color: var(--dark-text);
+          margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+          padding: 0.75rem;
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          font-size: 14px;
+          width: 100%;
+          box-sizing: border-box;
+          background: #fff;
+          color: var(--text);
           max-width: 100%;
         }
-
+        
+        .form-control:focus, .form-select:focus {
+          outline: none;
+          border-color: var(--accent);
+          box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+        }
+        
+        textarea.form-control {
+          resize: vertical;
+          min-height: 100px;
+        }
+        
+        /* Color Picker - Mobile First */
+        .color-picker {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 0.5rem;
+          margin: 0.5rem 0 1rem;
+        }
+        
         .color-option {
           width: 40px;
           height: 40px;
@@ -1135,338 +478,1052 @@ const ManagerSettings = () => {
           cursor: pointer;
           border: 3px solid transparent;
           transition: all 0.3s;
+          justify-self: center;
         }
-
+        
         .color-option:hover {
           transform: scale(1.1);
         }
-
+        
         .color-option.selected {
           border-color: var(--dark-text);
           transform: scale(1.1);
         }
-
+        
         .theme-preview {
-          padding: 15px;
-          border-radius: 8px;
-          margin-top: 15px;
+          padding: 1rem;
+          border-radius: var(--radius);
+          margin: 1rem 0;
           text-align: center;
           color: #fff;
           font-weight: 500;
+          background: var(--selected-theme, var(--primary-color));
         }
-
-        /* ========== STATUS BADGES ========== */
-        .status-badge {
-          padding: 4px 10px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 500;
+        
+        /* Toggle Switch - Mobile First */
+        .toggle-switch {
+          position: relative;
           display: inline-block;
-          white-space: nowrap;
-          margin: 2px;
+          width: 44px;
+          height: 24px;
         }
-
-        .status-teacher {
-          background: #d1fae5;
-          color: #065f46;
+        
+        .toggle-switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
         }
-
-        .status-student {
-          background: #dbeafe;
-          color: #1e40af;
+        
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #d1d5db;
+          transition: 0.3s;
+          border-radius: 24px;
         }
-
-        /* ========== EVENTS LIST ========== */
-        .events-list {
+        
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 18px;
+          width: 18px;
+          left: 3px;
+          bottom: 3px;
+          background-color: #fff;
+          transition: 0.3s;
+          border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+          background-color: var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+          transform: translateX(20px);
+        }
+        
+        /* Radio and Checkbox Groups - Mobile First */
+        .radio-group {
           display: flex;
-          flex-direction: column;
-          gap: 12px;
+          gap: 1rem;
+          margin-top: 0.5rem;
         }
-
-        .event-item {
+        
+        .radio-label {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding: 12px 0;
-          border-bottom: 1px solid #e2e8f0;
+          gap: 0.5rem;
+          font-weight: normal;
+          cursor: pointer;
         }
-
-        .event-item:last-child {
-          border-bottom: none;
+        
+        /* Action Buttons - Mobile First */
+        .actions {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+          margin-top: 1.5rem;
         }
-
-        .event-title {
-          font-size: 14px;
-          color: var(--dark-text);
-          font-weight: 500;
-        }
-
-        .event-date {
-          font-size: 13px;
-          color: var(--primary-color);
-          background: #eff6ff;
-          padding: 4px 10px;
-          border-radius: 4px;
-          font-weight: 500;
-        }
-
-        /* ========== DASHBOARD CARDS ========== */
-        .dashboard-card {
-          background: var(--card-bg);
+        
+        .btn {
+          padding: 0.75rem 1rem;
           border-radius: var(--radius);
-          padding: 20px;
-          box-shadow: var(--shadow);
-          transition: transform 0.2s, box-shadow 0.2s;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .dashboard-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-icon {
-          background: linear-gradient(
-            135deg,
-            var(--primary-color),
-            var(--primary-color)
-          );
-          padding: 12px;
-          border-radius: 8px;
+          font-weight: 500;
+          cursor: pointer;
+          border: none;
+          transition: all 0.3s;
+          font-size: 14px;
           display: inline-flex;
           align-items: center;
+          gap: 0.5rem;
           justify-content: center;
-          margin-bottom: 4px;
+          width: 100%;
+        }
+        
+        .btn-primary {
+          background: var(--primary-color);
+          color: white;
+        }
+        
+        .btn-primary:hover {
+          background: #151c65;
+          transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+          background: #6c757d;
+          color: white;
+        }
+        
+        .btn-secondary:hover {
+          background: #5a6268;
+          transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+          background: #ef4444;
+          color: white;
+        }
+        
+        .btn-danger:hover {
+          background: #dc2626;
+          transform: translateY(-2px);
         }
 
-        .card-icon i {
-          font-size: 24px;
+        /* Sidebar - Mobile First (hidden by default) */
+        .sidebar {
+          width: 280px;
+          background: var(--sidebar-bg);
+          color: #fff;
+          height: 100vh;
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 1030;
+          transition: transform 0.3s;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+          transform: translateX(-100%);
+          overflow: hidden;
+        }
+        
+        .sidebar.open {
+          transform: translateX(0);
+        }
+        
+        .sidebar-header {
+          padding: 1.25rem;
+          background: var(--sidebar-head);
+          text-align: center;
+          font-size: 1.25rem;
+          font-weight: 600;
+          height: 70px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          flex-shrink: 0;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        
+        .nav-links {
+          list-style: none;
+          padding: 1rem 0;
+          margin: 0;
+          flex-grow: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+          height: calc(100vh - 70px);
+        }
+        
+        .nav-links::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .nav-links::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-links::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 4px;
+        }
+        
+        .nav-links li {
+          margin: 0.25rem 0.75rem;
+        }
+        
+        .nav-links li a {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 1rem;
+          color: rgba(255, 255, 255, 0.85);
+          text-decoration: none;
+          transition: all 0.3s;
+          border-radius: 8px;
+          font-weight: 500;
+          font-size: 14px;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        
+        .nav-links li.active a,
+        .nav-links li a:hover {
+          background: rgba(255, 255, 255, 0.15);
           color: #fff;
         }
 
-        .card-label {
-          font-size: 14px;
-          color: var(--gray-text);
-          margin: 0 0 4px;
-          font-weight: 500;
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 1029;
+          backdrop-filter: blur(3px);
+        }
+        
+        .sidebar-overlay.open {
+          display: block;
         }
 
-        .card-value {
-          font-size: 28px;
-          font-weight: 700;
-          color: var(--dark-text);
-          margin: 0;
-          line-height: 1;
+        /* Toast Notification - Same as GradesPage */
+        .toast-notification {
+          position: fixed;
+          top: 1rem;
+          right: 1rem;
+          background: white;
+          border-radius: var(--radius);
+          padding: 1rem;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 1100;
+          animation: slideIn 0.3s ease-out;
+          max-width: 300px;
+          border-left: 4px solid;
         }
-
-        /* ========== RESPONSIVE DESIGN ========== */
-        @media (max-width: 1199.98px) {
-          .kpi-grid {
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        
+        .toast-notification.success {
+          border-left-color: #10b981;
+        }
+        
+        .toast-notification.warning {
+          border-left-color: #f59e0b;
+        }
+        
+        .toast-notification.info {
+          border-left-color: var(--primary-color);
+        }
+        
+        .toast-content {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        
+        .toast-content i {
+          font-size: 1.25rem;
+        }
+        
+        .toast-content i.fa-check-circle {
+          color: #10b981;
+        }
+        
+        .toast-content i.fa-exclamation-triangle {
+          color: #f59e0b;
+        }
+        
+        .toast-content i.fa-info-circle {
+          color: var(--primary-color);
+        }
+        
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
           }
-        }
-
-        @media (max-width: 991.98px) {
-          .sidebar {
-            transform: translateX(-100%);
-          }
-          .sidebar.open {
+          to {
             transform: translateX(0);
-          }
-          .main-content {
-            margin-left: 0 !important;
-            width: 100vw !important;
-            padding: 15px;
-          }
-          .mobile-menu-btn {
-            display: flex;
-          }
-          .topbar {
-            margin-top: 55px;
-            padding: 1rem;
-            gap: 10px;
-          }
-          .topbar-left {
-            gap: 0.75rem;
-          }
-          .welcome h1 {
-            font-size: 1.2rem;
-          }
-          .icon {
-            width: 36px;
-            height: 36px;
-          }
-          .user-avatar {
-            width: 36px;
-            height: 36px;
-          }
-          .kpi-grid {
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 15px;
+            opacity: 1;
           }
         }
 
-        @media (max-width: 767.98px) {
+        /* ========== SMALL TABLET (≥576px) ========== */
+        @media (min-width: 576px) {
           .main-content {
-            padding: 12px;
-          }
-          .topbar {
-            padding: 0.8rem;
-            margin-top: 50px;
-            min-height: 55px;
-          }
-          .welcome h1 {
-            font-size: 1.1rem;
-            max-width: 180px;
-          }
-          .icon {
-            width: 34px;
-            height: 34px;
-          }
-          .user-avatar {
-            width: 34px;
-            height: 34px;
-          }
-          .mobile-menu-btn {
-            width: 36px;
-            height: 36px;
-            font-size: 16px;
-            top: 12px;
-            left: 12px;
-          }
-          .kpi-grid {
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 12px;
-          }
-          .dashboard-card {
-            padding: 16px;
-          }
-          .card-icon {
-            padding: 10px;
-          }
-          .card-icon i {
-            font-size: 20px;
-          }
-          .card-value {
-            font-size: 24px;
-          }
-          .data-section {
-            padding: 16px;
-            margin-bottom: 20px;
-          }
-          .section-title {
-            font-size: 16px;
-          }
-          .table th,
-          .table td {
-            padding: 10px 12px;
-            font-size: 13px;
-          }
-        }
-
-        @media (max-width: 575.98px) {
-          .topbar {
-            flex-wrap: wrap;
             padding: 0.75rem;
-            margin-top: 50px;
-            gap: 8px;
           }
-          .topbar-left {
-            width: 100%;
-            justify-content: space-between;
-          }
-          .welcome {
-            flex: 1;
-            min-width: 0;
-          }
-          .welcome h1 {
-            font-size: 1rem;
-            max-width: 160px;
-          }
+          
           .welcome p {
-            font-size: 0.75rem;
+            display: block;
           }
-          .user-area {
-            width: 100%;
-            justify-content: flex-end;
-          }
-          .mobile-menu-btn {
-            width: 34px;
-            height: 34px;
-            font-size: 15px;
-            top: 10px;
-            left: 10px;
-          }
-          .kpi-grid {
+          
+          .settings-grid {
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 1.5rem;
           }
-          .dashboard-card {
-            padding: 14px;
-            gap: 8px;
+          
+          .profile-section {
+            flex-direction: row;
+            align-items: center;
+            text-align: left;
           }
-          .card-label {
-            font-size: 12px;
+          
+          .profile-info {
+            text-align: left;
           }
-          .card-value {
-            font-size: 20px;
+          
+          .color-picker {
+            grid-template-columns: repeat(7, 1fr);
           }
-          .data-section {
-            padding: 14px;
+          
+          .actions {
+            grid-template-columns: repeat(3, 1fr);
           }
-          .section-title {
-            font-size: 15px;
-            margin-bottom: 12px;
-          }
-          .table th,
-          .table td {
-            padding: 8px 10px;
-            font-size: 12px;
-          }
-          .status-badge {
-            font-size: 11px;
-            padding: 3px 8px;
-          }
-          .event-title {
-            font-size: 13px;
-          }
-          .event-date {
-            font-size: 12px;
-            padding: 3px 8px;
+          
+          .btn {
+            width: auto;
           }
         }
 
-        @media (max-width: 374.98px) {
-          .kpi-grid {
+        /* ========== TABLET (≥768px) ========== */
+        @media (min-width: 768px) {
+          .settings-section {
+            padding: 1.5rem;
+          }
+          
+          .section-title {
+            font-size: 1.25rem;
+          }
+          
+          .avatar {
+            width: 120px;
+            height: 120px;
+            font-size: 3rem;
+          }
+          
+          .profile-info h3 {
+            font-size: 1.5rem;
+          }
+        }
+
+        /* ========== DESKTOP (≥992px) ========== */
+        @media (min-width: 992px) {
+          .mobile-menu-toggle {
+            display: none !important;
+          }
+          
+          .desktop-menu-toggle {
+            display: flex !important;
+          }
+          
+          .sidebar {
+            transform: translateX(0);
+            width: 250px;
+          }
+          
+          .sidebar.collapsed {
+            width: 70px;
+          }
+          
+          .sidebar.collapsed .sidebar-header span {
+            display: none;
+          }
+          
+          .sidebar.collapsed .nav-links li a span {
+            display: none;
+          }
+          
+          .sidebar.collapsed .nav-links li a {
+            justify-content: center;
+            padding: 0.875rem;
+          }
+          
+          .sidebar-overlay {
+            display: none !important;
+          }
+          
+          .main-content {
+            margin-left: 250px;
+            width: calc(100vw - 250px);
+            max-width: calc(100vw - 250px);
+            padding: 1rem 1.5rem;
+          }
+          
+          .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
+            width: calc(100vw - 70px);
+            max-width: calc(100vw - 70px);
+          }
+          
+          .topbar {
+            padding: 1rem 1.5rem;
+            margin: 0 0 1.5rem 0;
+          }
+          
+          .avatar-img {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f8f9fa;
+          }
+          
+          .welcome p {
+            font-size: 0.9rem;
+          }
+        }
+
+        /* ========== LARGE DESKTOP (≥1200px) ========== */
+        @media (min-width: 1200px) {
+          .main-content {
+            padding: 1rem 2rem;
+          }
+          
+          .content-area {
+            max-width: 100%;
+          }
+          
+          .settings-section {
+            padding: 2rem;
+          }
+        }
+
+        /* ========== EXTRA LARGE DESKTOP (≥1400px) ========== */
+        @media (min-width: 1400px) {
+          .main-content {
+            padding: 1.5rem 3rem;
+          }
+        }
+
+        /* ========== EXTRA SMALL MOBILE (≤400px) ========== */
+        @media (max-width: 400px) {
+          .main-content {
+            padding: 0.25rem;
+          }
+          
+          .topbar {
+            padding: 0.5rem;
+            margin: 0 0 0.75rem 0;
+          }
+          
+          .user-area i.fa-calendar-alt,
+          .user-area i.fa-envelope {
+            display: none !important;
+          }
+          
+          .settings-section {
+            padding: 0.75rem;
+          }
+          
+          .section-title {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+          }
+          
+          .avatar {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+          }
+          
+          .avatar-upload-btn {
+            width: 24px;
+            height: 24px;
+            font-size: 0.8rem;
+          }
+          
+          .color-picker {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.25rem;
+          }
+          
+          .color-option {
+            width: 32px;
+            height: 32px;
+          }
+        }
+
+        /* ========== VERY SMALL MOBILE (≤350px) ========== */
+        @media (max-width: 350px) {
+          .topbar-header {
+            gap: 0.5rem;
+          }
+          
+          .topbar-header h2 {
+            font-size: 1rem;
+          }
+          
+          .avatar-img {
+            width: 32px;
+            height: 32px;
+          }
+          
+          .profile-section {
+            flex-direction: column;
+            text-align: center;
+          }
+          
+          .profile-info {
+            text-align: center;
+          }
+          
+          .settings-grid {
             grid-template-columns: 1fr;
           }
-          .topbar {
-            padding: 0.6rem;
+          
+          .color-picker {
+            grid-template-columns: repeat(3, 1fr);
           }
-          .welcome h1 {
-            font-size: 0.9rem;
-            max-width: 120px;
+          
+          .actions {
+            grid-template-columns: 1fr;
           }
-          .icon {
-            width: 32px;
-            height: 32px;
+          
+          .btn {
+            width: 100%;
           }
-          .user-avatar {
-            width: 32px;
-            height: 32px;
+        }
+        
+        /* ========== FIX FOR ALL MOBILE DEVICES ========== */
+        @media (max-width: 992px) {
+          .main-content {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            margin-left: 0 !important;
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
           }
-          .mobile-menu-btn {
-            width: 32px;
-            height: 32px;
-            font-size: 14px;
+          
+          .content-area, .settings-section {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+        }
+        
+        /* Animation */
+        .fade-in {
+          animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
       `}</style>
-    </div>
+
+      <div className="settings-page">
+        {/* Overlay for mobile sidebar */}
+        <div
+          className={`sidebar-overlay ${mobileOpen ? "open" : ""}`}
+          onClick={() => setMobileOpen(false)}
+        />
+
+        {/* Sidebar */}
+        <aside
+          className={`sidebar ${collapsed ? "collapsed" : ""} ${
+            mobileOpen ? "open" : ""
+          }`}
+        >
+          <div className="sidebar-header">
+            <span>E-Learn</span>
+          </div>
+          <ul className="nav-links">
+            {menuItems.map((item) => (
+              <li key={item.link} className={item.active ? "active" : ""}>
+                <Link
+                  to={item.link}
+                  onClick={() =>
+                    window.innerWidth <= 992 && setMobileOpen(false)
+                  }
+                >
+                  <i className={item.icon}></i>
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        {/* Main content */}
+        <main className="main-content">
+          {/* Topbar */}
+          <div className="topbar">
+            <div className="d-flex align-items-center justify-content-between w-100">
+              <div className="topbar-header">
+                <div
+                  className="mobile-menu-toggle"
+                  onClick={toggleSidebar}
+                  aria-label="Toggle menu"
+                >
+                  <i className="fas fa-bars"></i>
+                </div>
+
+                <div
+                  className="desktop-menu-toggle"
+                  onClick={toggleSidebar}
+                  aria-label="Toggle sidebar"
+                >
+                  <i className="fas fa-bars"></i>
+                </div>
+
+                <div className="welcome">
+                  <h2 className="mb-0">
+                    <span className="d-none d-sm-inline">Manager Settings</span>
+                    <span className="d-inline d-sm-none">Settings</span>
+                  </h2>
+                  <p className="text-muted mb-0 small d-none d-md-block">
+                    Manage your profile, preferences and security settings.
+                  </p>
+                </div>
+              </div>
+              <div className="user-area">
+                <div className="notification-badge position-relative">
+                  <i className="fas fa-bell fs-5"></i>
+                  <span className="badge-counter">3</span>
+                </div>
+                <i className="fas fa-calendar-alt d-none d-md-inline-block fs-5"></i>
+                <i className="fas fa-envelope d-none d-md-inline-block fs-5"></i>
+                <Link to="/managerProfile" className="d-inline-block">
+                  <img
+                    src="https://i.pravatar.cc/300?img=12"
+                    alt="Manager Avatar"
+                    className="avatar-img"
+                  />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="content-area">
+            {/* Profile Settings Section */}
+            <div className="settings-section fade-in">
+              <h3 className="section-title">Profile Settings</h3>
+
+              <div className="profile-section">
+                <div className="avatar-container">
+                  <div
+                    className="avatar"
+                    style={{
+                      backgroundImage: avatarBackground,
+                      backgroundSize: "cover",
+                      backgroundColor: avatarBackground
+                        ? "transparent"
+                        : selectedTheme,
+                    }}
+                  >
+                    {avatarText}
+                  </div>
+                  <button
+                    className="avatar-upload-btn"
+                    onClick={() =>
+                      document.getElementById("profilePic").click()
+                    }
+                  >
+                    📷
+                  </button>
+                  <input
+                    type="file"
+                    id="profilePic"
+                    style={{ display: "none" }}
+                    accept="image/*"
+                    onChange={updateProfilePic}
+                  />
+                </div>
+                <div className="profile-info">
+                  <h3>{profileName}</h3>
+                  <p>admin@academyhub.com</p>
+                  <p>Role: Platform Manager</p>
+                  <p>Member since: January 2023</p>
+                </div>
+              </div>
+
+              <div className="settings-grid">
+                <div>
+                  <div className="form-group">
+                    <label className="form-label">First Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Last Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Display Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={profileName}
+                      readOnly
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="form-group">
+                    <label className="form-label">Phone Number</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      defaultValue="+1 234 567 8900"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Bio</label>
+                    <textarea
+                      className="form-control"
+                      defaultValue="Platform administrator managing the e-learning system and overseeing all operations."
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Location</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      defaultValue="New York, USA"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Theme Colors Section */}
+            <div className="settings-section fade-in">
+              <h3 className="section-title">Theme Colors</h3>
+
+              <div className="form-group">
+                <label className="form-label">Choose Primary Color Theme</label>
+                <div className="color-picker">
+                  <div
+                    className={`color-option ${
+                      selectedTheme === "#1a237e" ? "selected" : ""
+                    }`}
+                    style={{ background: "#1a237e" }}
+                    onClick={() => selectTheme("#1a237e")}
+                  ></div>
+                  <div
+                    className={`color-option ${
+                      selectedTheme === "#2563eb" ? "selected" : ""
+                    }`}
+                    style={{ background: "#2563eb" }}
+                    onClick={() => selectTheme("#2563eb")}
+                  ></div>
+                  <div
+                    className={`color-option ${
+                      selectedTheme === "#dc2626" ? "selected" : ""
+                    }`}
+                    style={{ background: "#dc2626" }}
+                    onClick={() => selectTheme("#dc2626")}
+                  ></div>
+                  <div
+                    className={`color-option ${
+                      selectedTheme === "#16a34a" ? "selected" : ""
+                    }`}
+                    style={{ background: "#16a34a" }}
+                    onClick={() => selectTheme("#16a34a")}
+                  ></div>
+                  <div
+                    className={`color-option ${
+                      selectedTheme === "#f59e0b" ? "selected" : ""
+                    }`}
+                    style={{ background: "#f59e0b" }}
+                    onClick={() => selectTheme("#f59e0b")}
+                  ></div>
+                  <div
+                    className={`color-option ${
+                      selectedTheme === "#8b5cf6" ? "selected" : ""
+                    }`}
+                    style={{ background: "#8b5cf6" }}
+                    onClick={() => selectTheme("#8b5cf6")}
+                  ></div>
+                  <div
+                    className={`color-option ${
+                      selectedTheme === "#ec4899" ? "selected" : ""
+                    }`}
+                    style={{ background: "#ec4899" }}
+                    onClick={() => selectTheme("#ec4899")}
+                  ></div>
+                </div>
+                <div
+                  className="theme-preview"
+                  style={{ backgroundColor: selectedTheme }}
+                >
+                  Preview of Selected Theme
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Custom Color (Hex)</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="#1a237e"
+                  value={customColor}
+                  onChange={(e) => setCustomColor(e.target.value)}
+                  onBlur={applyCustomColor}
+                />
+              </div>
+            </div>
+
+            {/* Display & Language Section */}
+            <div className="settings-section fade-in">
+              <h3 className="section-title">Display & Language</h3>
+
+              <div className="settings-grid">
+                <div>
+                  <div className="form-group">
+                    <label className="form-label">Display Mode</label>
+                    <div className="radio-group">
+                      <label className="radio-label">
+                        <input
+                          type="radio"
+                          name="displayMode"
+                          value="light"
+                          defaultChecked
+                        />{" "}
+                        Light
+                      </label>
+                      <label className="radio-label">
+                        <input type="radio" name="displayMode" value="dark" />{" "}
+                        Dark
+                      </label>
+                      <label className="radio-label">
+                        <input type="radio" name="displayMode" value="auto" />{" "}
+                        Auto
+                      </label>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Language</label>
+                    <select
+                      className="form-select"
+                      value={language}
+                      onChange={(e) => handleLanguageChange(e.target.value)}
+                    >
+                      <option value="en">English</option>
+                      <option value="fa">فارسی (Persian)</option>
+                      <option value="ar">العربية (Arabic)</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">RTL Layout</label>
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={rtlLayout}
+                        onChange={(e) => setRtlLayout(e.target.checked)}
+                      />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <div className="form-group">
+                    <label className="form-label">Font Size</label>
+                    <select className="form-select">
+                      <option value="small">Small</option>
+                      <option value="medium" selected>
+                        Medium
+                      </option>
+                      <option value="large">Large</option>
+                      <option value="extra-large">Extra Large</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Compact Mode</label>
+                    <label className="toggle-switch">
+                      <input type="checkbox" />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Reduce Animations</label>
+                    <label className="toggle-switch">
+                      <input type="checkbox" />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notification Settings Section */}
+            <div className="settings-section fade-in">
+              <h3 className="section-title">Notification Settings</h3>
+
+              <div className="settings-grid">
+                <div>
+                  <h4>Email Notifications</h4>
+                  <div className="form-group">
+                    <label className="form-label">New user registration</label>
+                    <label className="toggle-switch">
+                      <input type="checkbox" defaultChecked />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      Course enrollment alerts
+                    </label>
+                    <label className="toggle-switch">
+                      <input type="checkbox" defaultChecked />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Revenue reports</label>
+                    <label className="toggle-switch">
+                      <input type="checkbox" defaultChecked />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <h4>In-App Notifications</h4>
+                  <div className="form-group">
+                    <label className="form-label">System alerts</label>
+                    <label className="toggle-switch">
+                      <input type="checkbox" defaultChecked />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Maintenance reminders</label>
+                    <label className="toggle-switch">
+                      <input type="checkbox" />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Weekly summary</label>
+                    <label className="toggle-switch">
+                      <input type="checkbox" defaultChecked />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Notification Email</label>
+                <input
+                  type="email"
+                  className="form-control"
+                  defaultValue="notifications@academyhub.com"
+                />
+              </div>
+            </div>
+
+            {/* Account Security Section */}
+            <div className="settings-section fade-in">
+              <h3 className="section-title">Account Security</h3>
+
+              <div className="settings-grid">
+                <div>
+                  <div className="form-group">
+                    <label className="form-label">Current Password</label>
+                    <input type="password" className="form-control" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">New Password</label>
+                    <input type="password" className="form-control" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Confirm New Password</label>
+                    <input type="password" className="form-control" />
+                  </div>
+                </div>
+                <div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      Two-Factor Authentication
+                    </label>
+                    <label className="toggle-switch">
+                      <input type="checkbox" />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Login Notifications</label>
+                    <label className="toggle-switch">
+                      <input type="checkbox" defaultChecked />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      Session Timeout (minutes)
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      defaultValue="30"
+                      min="5"
+                      max="1440"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="actions fade-in">
+              <button className="btn btn-primary" onClick={saveSettings}>
+                <i className="fas fa-save me-1"></i> Save Changes
+              </button>
+              <button className="btn btn-secondary" onClick={resetSettings}>
+                <i className="fas fa-undo me-1"></i> Reset to Default
+              </button>
+              <button className="btn btn-danger" onClick={deleteAccount}>
+                <i className="fas fa-trash me-1"></i> Delete Account
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </>
   );
 };
 

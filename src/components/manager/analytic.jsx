@@ -4,78 +4,54 @@ import { Chart, registerables } from "chart.js";
 
 Chart.register(...registerables);
 
-const Analytics = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const sidebarRef = useRef(null);
-  const mobileMenuToggleRef = useRef(null);
+const AnalyticsPage = () => {
+  const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Use refs to store chart instances
   const enrolmentChartRef = useRef(null);
   const popularityChartRef = useRef(null);
 
-  // Get current page for active menu highlighting
-  const getCurrentPage = () => {
-    const path = window.location.pathname;
-    if (path.includes("dashboard") || path === "/") return "dashboard";
-    if (path.includes("department")) return "departments";
-    if (path.includes("course")) return "courses";
-    if (path.includes("head")) return "heads";
-    if (path.includes("teacher")) return "teachers";
-    if (path.includes("student")) return "students";
-    if (path.includes("assignment")) return "assignments";
-    if (path.includes("grade")) return "grades";
-    if (path.includes("certificate")) return "certificates";
-    if (path.includes("announcement")) return "announcements";
-    if (path.includes("analytic")) return "analytics";
-    if (path.includes("report")) return "reports";
-    if (path.includes("setting")) return "settings";
-    return "dashboard";
-  };
+  // Use refs for chart canvas elements
+  const enrolmentChartCanvas = useRef(null);
+  const popularityChartCanvas = useRef(null);
 
-  const currentPage = getCurrentPage();
-
-  // Toggle sidebar on desktop
-  const handleDesktopToggle = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
-
-  // Toggle sidebar on mobile
-  const handleMobileToggle = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-
-  const handleMenuItemClick = () => {
+  const toggleSidebar = () => {
     if (window.innerWidth <= 992) {
-      setMobileMenuOpen(false);
+      setMobileOpen(!mobileOpen);
+    } else {
+      setCollapsed(!collapsed);
     }
   };
 
-  // Close sidebar when clicking outside on mobile
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (window.innerWidth <= 992) {
-        if (
-          sidebarRef.current &&
-          !sidebarRef.current.contains(event.target) &&
-          mobileMenuToggleRef.current &&
-          !mobileMenuToggleRef.current.contains(event.target)
-        ) {
-          setMobileMenuOpen(false);
-        }
+    const onResize = () => {
+      const shouldCollapse = window.innerWidth <= 992;
+      setCollapsed(shouldCollapse);
+      if (window.innerWidth > 992) {
+        setMobileOpen(false);
       }
     };
-
-    document.addEventListener("click", handleClickOutside);
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   // Initialize charts
   useEffect(() => {
-    let enrolmentChart, popularityChart;
-
+    // Clean up existing charts
     if (enrolmentChartRef.current) {
-      enrolmentChart = new Chart(enrolmentChartRef.current, {
+      enrolmentChartRef.current.destroy();
+      enrolmentChartRef.current = null;
+    }
+    if (popularityChartRef.current) {
+      popularityChartRef.current.destroy();
+      popularityChartRef.current = null;
+    }
+
+    // Create enrolment chart
+    if (enrolmentChartCanvas.current) {
+      const ctx = enrolmentChartCanvas.current.getContext("2d");
+      enrolmentChartRef.current = new Chart(ctx, {
         type: "line",
         data: {
           labels: [
@@ -128,8 +104,10 @@ const Analytics = () => {
       });
     }
 
-    if (popularityChartRef.current) {
-      popularityChart = new Chart(popularityChartRef.current, {
+    // Create popularity chart
+    if (popularityChartCanvas.current) {
+      const ctx = popularityChartCanvas.current.getContext("2d");
+      popularityChartRef.current = new Chart(ctx, {
         type: "doughnut",
         data: {
           labels: [
@@ -169,955 +147,1054 @@ const Analytics = () => {
       });
     }
 
-    // Handle window resize
-    const handleResize = () => {
-      if (window.innerWidth > 992) {
-        setMobileMenuOpen(false);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
+    // Cleanup function
     return () => {
-      window.removeEventListener("resize", handleResize);
-      if (enrolmentChart) enrolmentChart.destroy();
-      if (popularityChart) popularityChart.destroy();
+      if (enrolmentChartRef.current) {
+        enrolmentChartRef.current.destroy();
+        enrolmentChartRef.current = null;
+      }
+      if (popularityChartRef.current) {
+        popularityChartRef.current.destroy();
+        popularityChartRef.current = null;
+      }
     };
   }, []);
 
+  // KPI Cards
   const kpiCards = [
     {
       icon: "fas fa-user-graduate",
       title: "Avg. Course Completion",
       value: "87%",
+      description: "Across all courses",
     },
     {
       icon: "fas fa-clock",
       title: "Avg. Study Time / Week",
       value: "4h 12m",
+      description: "Per student",
     },
     {
       icon: "fas fa-star",
       title: "Overall Satisfaction",
       value: "4.8 / 5",
+      description: "Based on 1,200 reviews",
+    },
+    {
+      icon: "fas fa-chart-line",
+      title: "Retention Rate",
+      value: "92%",
+      description: "Quarter over quarter",
     },
   ];
 
+  // Top Students Data
   const topStudents = [
     { name: "Alice Nguyen", course: "Data Structures", grade: "98%" },
     { name: "Mike Johnson", course: "Marketing 101", grade: "96%" },
     { name: "Sara Ali", course: "Calculus II", grade: "95%" },
     { name: "John Smith", course: "Web Development", grade: "94%" },
     { name: "Emma Wilson", course: "UI/UX Design", grade: "93%" },
+    { name: "David Kim", course: "Machine Learning", grade: "92%" },
+    { name: "Lisa Brown", course: "Business Analytics", grade: "91%" },
+    { name: "Robert Chen", course: "Mobile Development", grade: "90%" },
+  ];
+
+  const menuItems = [
+    { icon: "fas fa-tachometer-alt", label: "Dashboard", link: "/" },
+    { icon: "fas fa-layer-group", label: "Departments", link: "/departments" },
+    { icon: "fas fa-book", label: "Courses", link: "/courses" },
+    { icon: "fas fa-chalkboard-teacher", label: "Heads", link: "/head" },
+    { icon: "fas fa-chalkboard-teacher", label: "Teachers", link: "/teachers" },
+    { icon: "fas fa-user-graduate", label: "Students", link: "/students" },
+    { icon: "fas fa-tasks", label: "Assignments", link: "/assignments" },
+    { icon: "fas fa-graduation-cap", label: "Grades", link: "/grades" },
+    { icon: "fas fa-bullhorn", label: "Announcements", link: "/announcements" },
+    {
+      icon: "fas fa-certificate",
+      label: "Certificates",
+      link: "/certificates",
+    },
+    {
+      icon: "fas fa-chart-pie",
+      label: "Analytics",
+      link: "/analytic",
+      active: true,
+    },
+    { icon: "fas fa-chart-line", label: "Reports", link: "/reports" },
+    { icon: "fas fa-cog", label: "Settings", link: "/settings" },
+    { icon: "fas fa-sign-out-alt", label: "Logout", link: "#" },
   ];
 
   return (
-    <div className="manager-dashboard container-fluid p-0">
-      {/* Mobile Menu Button */}
-      <button
-        ref={mobileMenuToggleRef}
-        className="mobile-menu-btn d-lg-none"
-        onClick={handleMobileToggle}
-      >
-        <i className="fas fa-bars"></i>
-      </button>
+    <>
+      <style>{`
+        :root {
+          --sidebar-bg: #1a237e;
+          --sidebar-head: #1a237e;
+          --accent: #1a237e;
+          --text: #333;
+          --text-light: #555;
+          --border: #eee;
+          --card-bg: #fff;
+          --shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+          --radius: 8px;
+          --light-bg: #f5f6fa;
+          --dark-text: #1e293b;
+          --gray-text: #64748b;
+          --primary-color: #1a237e;
+          --secondary-color: #38bdf8;
+        }
+        
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+        
+        body {
+          background: var(--light-bg);
+          color: var(--text);
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          overflow-x: hidden;
+          width: 100vw;
+          max-width: 100%;
+        }
+        
+        /* ========== MAIN CONTAINER ========== */
+        .analytics-page {
+          min-height: 100vh;
+          background: var(--light-bg);
+          position: relative;
+          width: 100vw;
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+        
+        /* ========== MOBILE FIRST STYLES ========== */
+        /* Main Content - Mobile First */
+        .main-content {
+          width: 100vw;
+          max-width: 100%;
+          min-height: 100vh;
+          transition: all 0.3s;
+          padding: 0.5rem;
+          margin-left: 0;
+          background: var(--light-bg);
+          overflow-x: hidden;
+          position: relative;
+        }
+        
+        /* Topbar - Mobile First */
+        .topbar {
+          background: #fff;
+          box-shadow: var(--shadow);
+          border-radius: var(--radius);
+          padding: 0.75rem;
+          margin: 0 0 1rem 0;
+          position: sticky;
+          top: 0.5rem;
+          z-index: 1020;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        
+        .topbar-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          width: 100%;
+        }
+        
+        .mobile-menu-toggle {
+          font-size: 1.25rem;
+          cursor: pointer;
+          color: var(--text);
+          padding: 0.5rem;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        
+        .desktop-menu-toggle {
+          font-size: 1.25rem;
+          cursor: pointer;
+          color: var(--text);
+          padding: 0.5rem;
+          border-radius: 8px;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        
+        .welcome {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .welcome h2 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          margin: 0;
+          color: var(--dark-text);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
+        }
+        
+        .welcome p {
+          font-size: 0.85rem;
+          color: var(--gray-text);
+          margin: 0.25rem 0 0 0;
+          display: none;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
+        }
+        
+        .user-area {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          flex-shrink: 0;
+        }
+        
+        .notification-badge {
+          position: relative;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+        
+        .badge-counter {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background: #e74c3c;
+          color: white;
+          font-size: 0.6rem;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .avatar-img {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid #f8f9fa;
+          flex-shrink: 0;
+        }
 
-      {/* Sidebar */}
-      <aside
-        ref={sidebarRef}
-        className={`sidebar ${sidebarCollapsed ? "collapsed" : ""} ${
-          mobileMenuOpen ? "open" : ""
-        }`}
-      >
-        <div className="sidebar-header">E-Learn</div>
-        <div className="menu-wrapper">
-          <ul className="menu">
-            <li className={currentPage === "dashboard" ? "active" : ""}>
-              <Link to="/" onClick={handleMenuItemClick}>
-                <i className="fas fa-tachometer-alt"></i>
-                <span>Dashboard</span>
-              </Link>
-            </li>
-            <li className={currentPage === "departments" ? "active" : ""}>
-              <Link to="/departments" onClick={handleMenuItemClick}>
-                <i className="fas fa-layer-group"></i>
-                <span>Departments</span>
-              </Link>
-            </li>
-            <li className={currentPage === "courses" ? "active" : ""}>
-              <Link to="/courses" onClick={handleMenuItemClick}>
-                <i className="fas fa-book"></i>
-                <span>Courses</span>
-              </Link>
-            </li>
-            <li className={currentPage === "heads" ? "active" : ""}>
-              <Link to="/heads" onClick={handleMenuItemClick}>
-                <i className="fas fa-chalkboard-teacher"></i>
-                <span>Heads</span>
-              </Link>
-            </li>
-            <li className={currentPage === "teachers" ? "active" : ""}>
-              <Link to="/teachers" onClick={handleMenuItemClick}>
-                <i className="fas fa-chalkboard-teacher"></i>
-                <span>Teachers</span>
-              </Link>
-            </li>
-            <li className={currentPage === "students" ? "active" : ""}>
-              <Link to="/students" onClick={handleMenuItemClick}>
-                <i className="fas fa-user-graduate"></i>
-                <span>Students</span>
-              </Link>
-            </li>
-            <li className={currentPage === "assignments" ? "active" : ""}>
-              <Link to="/assignments" onClick={handleMenuItemClick}>
-                <i className="fas fa-tasks"></i>
-                <span>Assignments</span>
-              </Link>
-            </li>
-            <li className={currentPage === "grades" ? "active" : ""}>
-              <Link to="/grades" onClick={handleMenuItemClick}>
-                <i className="fas fa-graduation-cap"></i>
-                <span>Grades</span>
-              </Link>
-            </li>
-            <li className={currentPage === "certificates" ? "active" : ""}>
-              <Link to="/certificates" onClick={handleMenuItemClick}>
-                <i className="fas fa-certificate"></i>
-                <span>Certificates</span>
-              </Link>
-            </li>
-            <li className={currentPage === "announcements" ? "active" : ""}>
-              <Link to="/announcements" onClick={handleMenuItemClick}>
-                <i className="fas fa-bullhorn"></i>
-                <span>Announcements</span>
-              </Link>
-            </li>
-            <li className={currentPage === "analytics" ? "active" : ""}>
-              <Link to="/analytics" onClick={handleMenuItemClick}>
-                <i className="fas fa-chart-pie"></i>
-                <span>Analytics</span>
-              </Link>
-            </li>
-            <li className={currentPage === "reports" ? "active" : ""}>
-              <Link to="/reports" onClick={handleMenuItemClick}>
-                <i className="fas fa-chart-line"></i>
-                <span>Reports</span>
-              </Link>
-            </li>
-            <li className={currentPage === "settings" ? "active" : ""}>
-              <Link to="/settings" onClick={handleMenuItemClick}>
-                <i className="fas fa-cog"></i>
-                <span>Settings</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleMenuItemClick();
-                  console.log("Logout clicked");
-                }}
-              >
-                <i className="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-              </Link>
-            </li>
+        /* Content Area - Mobile First */
+        .content-area {
+          width: 100%;
+          padding: 0;
+          background: transparent;
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        /* KPI Grid - Mobile First */
+        .kpi-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+          margin: 0 0 1.5rem 0;
+          width: 100%;
+          max-width: 100%;
+        }
+        
+        .dashboard-card {
+          background: var(--card-bg);
+          border-radius: var(--radius);
+          padding: 1rem;
+          box-shadow: var(--shadow);
+          transition: transform 0.2s;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          width: 100%;
+          box-sizing: border-box;
+        }
+        
+        .dashboard-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-icon {
+          background: linear-gradient(135deg, var(--primary-color), #1a237e);
+          padding: 12px;
+          border-radius: 8px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          flex-shrink: 0;
+        }
+        
+        .card-icon i {
+          font-size: 20px;
+          color: #fff;
+        }
+        
+        .card-label {
+          font-size: 13px;
+          color: var(--gray-text);
+          margin: 0 0 4px;
+          font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          width: 100%;
+          text-align: center;
+        }
+        
+        .card-value {
+          font-size: 24px;
+          font-weight: 700;
+          color: var(--dark-text);
+          margin: 0;
+          line-height: 1;
+        }
+        
+        .card-description {
+          font-size: 0.75rem;
+          color: var(--gray-text);
+          margin: 0.25rem 0 0 0;
+        }
+
+        /* Charts Section - Mobile First */
+        .charts-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1rem;
+          margin: 0 0 1.5rem 0;
+          width: 100%;
+        }
+        
+        .chart-card {
+          background: var(--card-bg);
+          border-radius: var(--radius);
+          overflow: hidden;
+          box-shadow: var(--shadow);
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          width: 100%;
+          box-sizing: border-box;
+          padding: 1rem;
+        }
+        
+        .chart-title {
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--dark-text);
+          margin: 0 0 1rem 0;
+          text-align: center;
+        }
+        
+        .chart-container {
+          position: relative;
+          height: 250px;
+          width: 100%;
+        }
+
+        /* Table Section - Mobile First */
+        .table-card {
+          background: var(--card-bg);
+          border-radius: var(--radius);
+          overflow: hidden;
+          box-shadow: var(--shadow);
+          margin: 0 0 1.5rem 0;
+          width: 100%;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          padding: 1rem;
+        }
+        
+        .table-title {
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--dark-text);
+          margin: 0 0 1rem 0;
+          text-align: center;
+        }
+        
+        .table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        
+        .table thead {
+          background: #f8f9fa;
+        }
+        
+        .table th {
+          padding: 1rem;
+          text-align: left;
+          font-weight: 600;
+          color: var(--dark-text);
+          font-size: 0.85rem;
+          border-bottom: 1px solid var(--border);
+          display: none;
+        }
+        
+        .table td {
+          padding: 1rem;
+          border-bottom: 1px solid var(--border);
+          display: block;
+          text-align: right;
+          position: relative;
+          padding-left: 50%;
+        }
+        
+        .table td:before {
+          content: attr(data-label);
+          position: absolute;
+          left: 1rem;
+          width: calc(50% - 2rem);
+          padding-right: 0.5rem;
+          text-align: left;
+          font-weight: 600;
+          color: var(--dark-text);
+        }
+        
+        .table tr:last-child td {
+          border-bottom: none;
+        }
+        
+        .table tr {
+          display: block;
+          margin-bottom: 0.5rem;
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 0.5rem;
+          background: white;
+        }
+        
+        .table tbody tr {
+          margin-bottom: 0.5rem;
+        }
+        
+        .grade-badge {
+          padding: 0.25rem 0.75rem;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          display: inline-block;
+          white-space: nowrap;
+          background: linear-gradient(135deg, var(--primary-color), #1a237e);
+          color: white;
+        }
+
+        /* Sidebar - Mobile First (hidden by default) */
+        .sidebar {
+          width: 280px;
+          background: var(--sidebar-bg);
+          color: #fff;
+          height: 100vh;
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 1030;
+          transition: transform 0.3s;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+          transform: translateX(-100%);
+          overflow: hidden;
+        }
+        
+        .sidebar.open {
+          transform: translateX(0);
+        }
+        
+        .sidebar-header {
+          padding: 1.25rem;
+          background: var(--sidebar-head);
+          text-align: center;
+          font-size: 1.25rem;
+          font-weight: 600;
+          height: 70px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          flex-shrink: 0;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        
+        .nav-links {
+          list-style: none;
+          padding: 1rem 0;
+          margin: 0;
+          flex-grow: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+          height: calc(100vh - 70px);
+        }
+        
+        .nav-links::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .nav-links::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-links::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 4px;
+        }
+        
+        .nav-links li {
+          margin: 0.25rem 0.75rem;
+        }
+        
+        .nav-links li a {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 1rem;
+          color: rgba(255, 255, 255, 0.85);
+          text-decoration: none;
+          transition: all 0.3s;
+          border-radius: 8px;
+          font-weight: 500;
+          font-size: 14px;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        
+        .nav-links li.active a,
+        .nav-links li a:hover {
+          background: rgba(255, 255, 255, 0.15);
+          color: #fff;
+        }
+
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 1029;
+          backdrop-filter: blur(3px);
+        }
+        
+        .sidebar-overlay.open {
+          display: block;
+        }
+
+        /* ========== SMALL TABLET (≥576px) ========== */
+        @media (min-width: 576px) {
+          .main-content {
+            padding: 0.75rem;
+          }
+          
+          .kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+          }
+          
+          .welcome p {
+            display: block;
+          }
+          
+          .card-icon {
+            width: 56px;
+            height: 56px;
+          }
+          
+          .card-icon i {
+            font-size: 24px;
+          }
+          
+          .card-label {
+            font-size: 14px;
+          }
+          
+          .card-value {
+            font-size: 28px;
+          }
+          
+          .charts-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          
+          .chart-container {
+            height: 280px;
+          }
+          
+          .table td {
+            display: table-cell;
+            text-align: left;
+            padding-left: 1rem;
+          }
+          
+          .table td:before {
+            display: none;
+          }
+          
+          .table th {
+            display: table-cell;
+          }
+          
+          .table tr {
+            display: table-row;
+            margin-bottom: 0;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+          }
+        }
+
+        /* ========== TABLET (≥768px) ========== */
+        @media (min-width: 768px) {
+          .kpi-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+          }
+          
+          .dashboard-card {
+            padding: 1.25rem;
+          }
+          
+          .chart-container {
+            height: 300px;
+          }
+          
+          .table th, .table td {
+            padding: 1rem;
+          }
+        }
+
+        /* ========== DESKTOP (≥992px) ========== */
+        @media (min-width: 992px) {
+          .mobile-menu-toggle {
+            display: none !important;
+          }
+          
+          .desktop-menu-toggle {
+            display: flex !important;
+          }
+          
+          .sidebar {
+            transform: translateX(0);
+            width: 250px;
+          }
+          
+          .sidebar.collapsed {
+            width: 70px;
+          }
+          
+          .sidebar.collapsed .sidebar-header span {
+            display: none;
+          }
+          
+          .sidebar.collapsed .nav-links li a span {
+            display: none;
+          }
+          
+          .sidebar.collapsed .nav-links li a {
+            justify-content: center;
+            padding: 0.875rem;
+          }
+          
+          .sidebar-overlay {
+            display: none !important;
+          }
+          
+          .main-content {
+            margin-left: 250px;
+            width: calc(100vw - 250px);
+            max-width: calc(100vw - 250px);
+            padding: 1rem 1.5rem;
+          }
+          
+          .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
+            width: calc(100vw - 70px);
+            max-width: calc(100vw - 70px);
+          }
+          
+          .topbar {
+            padding: 1rem 1.5rem;
+            margin: 0 0 1.5rem 0;
+          }
+          
+          .avatar-img {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f8f9fa;
+          }
+          
+          .welcome p {
+            font-size: 0.9rem;
+          }
+          
+          .chart-container {
+            height: 320px;
+          }
+        }
+
+        /* ========== LARGE DESKTOP (≥1200px) ========== */
+        @media (min-width: 1200px) {
+          .main-content {
+            padding: 1rem 2rem;
+          }
+          
+          .content-area {
+            max-width: 100%;
+          }
+          
+          .chart-container {
+            height: 340px;
+          }
+        }
+
+        /* ========== EXTRA LARGE DESKTOP (≥1400px) ========== */
+        @media (min-width: 1400px) {
+          .main-content {
+            padding: 1.5rem 3rem;
+          }
+          
+          .chart-container {
+            height: 360px;
+          }
+        }
+
+        /* ========== EXTRA SMALL MOBILE (≤400px) ========== */
+        @media (max-width: 400px) {
+          .main-content {
+            padding: 0.25rem;
+          }
+          
+          .topbar {
+            padding: 0.5rem;
+            margin: 0 0 0.75rem 0;
+          }
+          
+          .user-area i.fa-calendar-alt,
+          .user-area i.fa-envelope {
+            display: none !important;
+          }
+          
+          .kpi-grid {
+            gap: 0.5rem;
+          }
+          
+          .dashboard-card {
+            padding: 0.75rem;
+            gap: 8px;
+          }
+          
+          .card-icon {
+            padding: 8px;
+            width: 40px;
+            height: 40px;
+          }
+          
+          .card-icon i {
+            font-size: 16px;
+          }
+          
+          .card-value {
+            font-size: 20px;
+          }
+          
+          .card-label {
+            font-size: 12px;
+          }
+          
+          .card-description {
+            font-size: 0.7rem;
+          }
+          
+          .chart-card, .table-card {
+            padding: 0.75rem;
+          }
+          
+          .chart-title, .table-title {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+          }
+          
+          .chart-container {
+            height: 220px;
+          }
+          
+          .table td {
+            padding: 0.75rem;
+            padding-left: 50%;
+          }
+          
+          .table td:before {
+            left: 0.75rem;
+          }
+          
+          .grade-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+          }
+        }
+
+        /* ========== VERY SMALL MOBILE (≤350px) ========== */
+        @media (max-width: 350px) {
+          .topbar-header {
+            gap: 0.5rem;
+          }
+          
+          .topbar-header h2 {
+            font-size: 1rem;
+          }
+          
+          .avatar-img {
+            width: 32px;
+            height: 32px;
+          }
+          
+          .dashboard-card {
+            flex-direction: row;
+            text-align: left;
+            align-items: center;
+            gap: 0.75rem;
+          }
+          
+          .card-icon {
+            flex-shrink: 0;
+          }
+          
+          .card-info {
+            flex: 1;
+            min-width: 0;
+          }
+          
+          .card-label, .card-description {
+            text-align: left;
+          }
+          
+          .chart-container {
+            height: 200px;
+          }
+          
+          .table td {
+            padding: 0.5rem;
+            padding-left: 50%;
+          }
+          
+          .table td:before {
+            left: 0.5rem;
+            font-size: 0.8rem;
+          }
+        }
+        
+        /* ========== FIX FOR ALL MOBILE DEVICES ========== */
+        @media (max-width: 992px) {
+          .main-content {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            margin-left: 0 !important;
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+          }
+          
+          .content-area, .charts-grid, .table-card {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          
+          .charts-grid {
+            gap: 0.75rem;
+          }
+        }
+        
+        /* Animation */
+        .fade-in {
+          animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+
+      <div className="analytics-page">
+        {/* Overlay for mobile sidebar */}
+        <div
+          className={`sidebar-overlay ${mobileOpen ? "open" : ""}`}
+          onClick={() => setMobileOpen(false)}
+        />
+
+        {/* Sidebar */}
+        <aside
+          className={`sidebar ${collapsed ? "collapsed" : ""} ${
+            mobileOpen ? "open" : ""
+          }`}
+        >
+          <div className="sidebar-header">
+            <span>E-Learn</span>
+          </div>
+          <ul className="nav-links">
+            {menuItems.map((item) => (
+              <li key={item.link} className={item.active ? "active" : ""}>
+                <Link
+                  to={item.link}
+                  onClick={() =>
+                    window.innerWidth <= 992 && setMobileOpen(false)
+                  }
+                >
+                  <i className={item.icon}></i>
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            ))}
           </ul>
-        </div>
-      </aside>
+        </aside>
 
-      {/* Main Content */}
-      <main className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        {/* Topbar */}
-        <header className="topbar container-fluid">
-          <div className="row align-items-center">
-            <div className="col-12 col-lg-6">
-              <div className="topbar-left d-flex align-items-center">
+        {/* Main content */}
+        <main className="main-content">
+          {/* Topbar */}
+          <div className="topbar">
+            <div className="d-flex align-items-center justify-content-between w-100">
+              <div className="topbar-header">
                 <div
-                  className="icon d-none d-lg-flex"
-                  onClick={handleDesktopToggle}
+                  className="mobile-menu-toggle"
+                  onClick={toggleSidebar}
+                  aria-label="Toggle menu"
                 >
                   <i className="fas fa-bars"></i>
                 </div>
+
+                <div
+                  className="desktop-menu-toggle"
+                  onClick={toggleSidebar}
+                  aria-label="Toggle sidebar"
+                >
+                  <i className="fas fa-bars"></i>
+                </div>
+
                 <div className="welcome">
-                  <h1 className="mb-1">Analytics Dashboard</h1>
-                  <p className="d-none d-md-block mb-0">
+                  <h2 className="mb-0">
+                    <span className="d-none d-sm-inline">
+                      Analytics Dashboard
+                    </span>
+                    <span className="d-inline d-sm-none">Analytics</span>
+                  </h2>
+                  <p className="text-muted mb-0 small d-none d-md-block">
                     Deep-dive metrics for <strong>Mr. Smith</strong> — all
                     numbers updated live.
                   </p>
                 </div>
               </div>
-            </div>
-            <div className="col-12 col-lg-6 mt-3 mt-lg-0">
-              <div className="user-area d-flex justify-content-end align-items-center">
-                <div className="icon me-2 position-relative">
-                  <i className="fas fa-bell"></i>
-                  <span
-                    className="badge bg-danger"
-                    style={{
-                      position: "absolute",
-                      top: "-5px",
-                      right: "-5px",
-                      fontSize: "0.6rem",
-                      padding: "2px 5px",
-                    }}
-                  >
-                    3
-                  </span>
+              <div className="user-area">
+                <div className="notification-badge position-relative">
+                  <i className="fas fa-bell fs-5"></i>
+                  <span className="badge-counter">3</span>
                 </div>
-                <div className="icon me-2 d-none d-md-flex">
-                  <i className="fas fa-envelope"></i>
-                </div>
-                <Link to="/profile" className="d-inline-block">
+                <i className="fas fa-calendar-alt d-none d-md-inline-block fs-5"></i>
+                <i className="fas fa-envelope d-none d-md-inline-block fs-5"></i>
+                <Link to="/managerProfile" className="d-inline-block">
                   <img
-                    src="https://i.pravatar.cc/100?img=12"
+                    src="https://i.pravatar.cc/300?img=12"
                     alt="Manager Avatar"
-                    className="user-avatar"
+                    className="avatar-img"
                   />
                 </Link>
               </div>
             </div>
           </div>
-        </header>
 
-        {/* Content Area */}
-        <div className="container-fluid content-area">
-          {/* KPI Cards */}
-          <div className="row g-3 mb-4">
-            {kpiCards.map((card, index) => (
-              <div key={index} className="col-12 col-sm-6 col-xl-4">
-                <div className="dashboard-card text-center">
+          <div className="content-area">
+            {/* KPI Cards */}
+            <div className="kpi-grid">
+              {kpiCards.map((card, index) => (
+                <div className="dashboard-card fade-in" key={index}>
                   <div className="card-icon">
                     <i className={card.icon}></i>
                   </div>
                   <div className="card-info">
-                    <h3 className="fs-6 text-muted mb-2">{card.title}</h3>
-                    <p className="fs-3 fw-bold mb-0">{card.value}</p>
+                    <h3 className="card-label">{card.title}</h3>
+                    <p className="card-value">{card.value}</p>
+                    <p className="card-description">{card.description}</p>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Charts Section */}
+            <div className="charts-grid">
+              <div className="chart-card fade-in">
+                <h3 className="chart-title">Monthly Enrolment Trend</h3>
+                <div className="chart-container">
+                  <canvas ref={enrolmentChartCanvas}></canvas>
+                </div>
               </div>
-            ))}
-          </div>
 
-          {/* Charts Section */}
-          <div className="row g-3 mb-4">
-            <div className="col-12 col-lg-6">
-              <section className="data-section">
-                <h2 className="section-title">Monthly Enrolment Trend</h2>
-                <div className="chart-container">
-                  <canvas ref={enrolmentChartRef}></canvas>
-                </div>
-              </section>
-            </div>
-            <div className="col-12 col-lg-6">
-              <section className="data-section">
-                <h2 className="section-title">
+              <div className="chart-card fade-in">
+                <h3 className="chart-title">
                   Course Popularity (Current Semester)
-                </h2>
+                </h3>
                 <div className="chart-container">
-                  <canvas ref={popularityChartRef}></canvas>
+                  <canvas ref={popularityChartCanvas}></canvas>
                 </div>
-              </section>
+              </div>
             </div>
-          </div>
 
-          {/* Table Section */}
-          <div className="row">
-            <div className="col-12">
-              <section className="data-section">
-                <h2 className="section-title">Top Performing Students</h2>
-                <div className="table-responsive">
-                  <table className="table table-hover">
-                    <thead className="table-light">
-                      <tr>
-                        <th data-label="Student">Student</th>
-                        <th data-label="Course">Course</th>
-                        <th data-label="Grade" className="text-center">
-                          Grade
-                        </th>
+            {/* Table Section */}
+            <div className="table-card fade-in">
+              <h3 className="table-title">Top Performing Students</h3>
+              <div className="table-responsive">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Student</th>
+                      <th>Course</th>
+                      <th>Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topStudents.map((student, index) => (
+                      <tr key={index}>
+                        <td data-label="Student">{student.name}</td>
+                        <td data-label="Course">{student.course}</td>
+                        <td data-label="Grade">
+                          <span className="grade-badge">{student.grade}</span>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {topStudents.map((student, index) => (
-                        <tr key={index}>
-                          <td data-label="Student">{student.name}</td>
-                          <td data-label="Course">{student.course}</td>
-                          <td data-label="Grade" className="text-center">
-                            <span className="badge bg-primary">
-                              {student.grade}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
-
-      <style jsx>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          font-family: "Poppins", sans-serif;
-        }
-
-        body {
-          display: flex;
-          min-height: 100vh;
-          background: #f4f7fb;
-          color: #1e293b;
-          transition: all 0.3s ease;
-          overflow-x: hidden;
-        }
-
-        .manager-dashboard {
-          display: flex;
-          min-height: 100vh;
-          width: 100%;
-          overflow-x: hidden;
-        }
-
-        /* ========= SIDEBAR ========= */
-        .sidebar {
-          width: 240px;
-          background: linear-gradient(180deg, #1a237e, #1a237e);
-          color: #fff;
-          display: flex;
-          flex-direction: column;
-          position: fixed;
-          left: 0;
-          top: 0;
-          height: 100vh;
-          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-          transition: width 0.3s ease, transform 0.3s ease;
-          overflow-y: auto;
-          z-index: 1030;
-        }
-
-        .sidebar.collapsed {
-          width: 70px;
-        }
-
-        .sidebar-header {
-          text-align: center;
-          padding: 1.8rem;
-          background: rgba(255, 255, 255, 0.1);
-          font-size: 1.5rem;
-          font-weight: 600;
-          white-space: nowrap;
-          overflow: hidden;
-          height: 80px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .sidebar.collapsed .sidebar-header {
-          font-size: 0;
-        }
-
-        .menu-wrapper {
-          flex: 1;
-          overflow-y: auto;
-          padding: 10px 0;
-        }
-
-        .menu {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-        }
-
-        .menu li a {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 1rem 1.5rem;
-          color: #e2e8f0;
-          text-decoration: none;
-          transition: all 0.3s;
-          border-left: 4px solid transparent;
-          white-space: nowrap;
-          overflow: hidden;
-        }
-
-        .menu li a:hover,
-        .menu li.active a {
-          background: rgba(255, 255, 255, 0.15);
-          border-left-color: #38bdf8;
-          color: #fff;
-        }
-
-        .sidebar.collapsed .menu li a span {
-          display: none;
-        }
-
-        /* ========= MAIN CONTENT ========= */
-        .main-content {
-          margin-left: 240px;
-          min-height: 100vh;
-          transition: margin-left 0.3s ease;
-          width: calc(100vw - 240px);
-          display: flex;
-          flex-direction: column;
-          position: relative;
-        }
-
-        .main-content.collapsed {
-          margin-left: 70px;
-          width: calc(100vw - 70px);
-        }
-
-        /* ========= TOPBAR ========= */
-        .topbar {
-          padding: 1.2rem 1.5rem;
-          background: #fff;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-          width: 100%;
-          margin: 0 0 20px 0;
-          min-height: 80px;
-        }
-
-        .welcome h1 {
-          font-size: 1.6rem;
-          color: #1e293b;
-          margin: 0;
-          font-weight: 600;
-          line-height: 1.3;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .welcome p {
-          font-size: 0.95rem;
-          color: #64748b;
-          margin: 5px 0 0 0;
-          opacity: 0.8;
-        }
-
-        .icon {
-          background: #eff6ff;
-          color: #1a237e;
-          width: 44px;
-          height: 44px;
-          border-radius: 10px;
-          cursor: pointer;
-          transition: 0.3s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.1rem;
-          flex-shrink: 0;
-        }
-
-        .icon:hover {
-          background: #1a237e;
-          color: #fff;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(26, 35, 126, 0.2);
-        }
-
-        .user-avatar {
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          border: 2px solid #1a237e;
-          object-fit: cover;
-          flex-shrink: 0;
-        }
-
-        /* ========= CONTENT AREA ========= */
-        .content-area {
-          flex: 1;
-          overflow-y: auto;
-          padding: 0 15px 15px 15px;
-        }
-
-        /* ========= DASHBOARD CARDS ========= */
-        .dashboard-card {
-          background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          transition: all 0.3s ease;
-          text-align: center;
-          border: 1px solid transparent;
-          height: 100%;
-        }
-
-        .dashboard-card:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-          border-color: #1a237e;
-        }
-
-        .card-icon {
-          background: linear-gradient(135deg, #1a237e, #1a237e);
-          padding: 12px;
-          border-radius: 10px;
-          display: inline-block;
-          margin-bottom: 12px;
-        }
-
-        .card-icon i {
-          font-size: 24px;
-          color: #fff;
-        }
-
-        /* ========= DATA SECTION ========= */
-        .data-section {
-          background: #fff;
-          border-radius: 12px;
-          padding: 25px;
-          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-        }
-
-        .section-title {
-          font-size: 1.2rem;
-          color: #1a237e;
-          margin: 0 0 20px 0;
-          font-weight: 600;
-        }
-
-        /* ========= CHART CONTAINER ========= */
-        .chart-container {
-          position: relative;
-          height: 300px;
-          width: 100%;
-          flex: 1;
-        }
-
-        /* ========= TABLE ========= */
-        .table-responsive {
-          overflow-x: auto;
-          border-radius: 12px;
-          border: 1px solid #e5e7eb;
-        }
-
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          background: #fff;
-          font-size: 0.95rem;
-        }
-
-        th,
-        td {
-          padding: 16px 20px;
-          text-align: left;
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        th {
-          background: #f8fafc;
-          color: #1a237e;
-          font-weight: 600;
-          font-size: 0.9rem;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        tr {
-          transition: background 0.2s;
-        }
-
-        tr:hover {
-          background: #f9fafb;
-        }
-
-        /* ========= MOBILE MENU BUTTON ========= */
-        .mobile-menu-btn {
-          display: none;
-          position: fixed;
-          top: 20px;
-          left: 20px;
-          z-index: 1040;
-          background: #1a237e;
-          color: white;
-          border: none;
-          width: 44px;
-          height: 44px;
-          border-radius: 8px;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          cursor: pointer;
-          transition: all 0.3s;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .mobile-menu-btn:hover {
-          background: #1a237e;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        /* ========= CLEAN SCROLLBARS ========= */
-        .sidebar::-webkit-scrollbar,
-        .main-content::-webkit-scrollbar,
-        .menu-wrapper::-webkit-scrollbar,
-        .content-area::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track,
-        .main-content::-webkit-scrollbar-track,
-        .menu-wrapper::-webkit-scrollbar-track,
-        .content-area::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb,
-        .main-content::-webkit-scrollbar-thumb,
-        .menu-wrapper::-webkit-scrollbar-thumb,
-        .content-area::-webkit-scrollbar-thumb {
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 3px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb:hover,
-        .main-content::-webkit-scrollbar-thumb:hover,
-        .menu-wrapper::-webkit-scrollbar-thumb:hover,
-        .content-area::-webkit-scrollbar-thumb:hover {
-          background: rgba(0, 0, 0, 0.3);
-        }
-
-        /* Firefox scrollbar */
-        .sidebar,
-        .main-content,
-        .menu-wrapper,
-        .content-area {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-        }
-
-        /* ========= RESPONSIVE BREAKPOINTS ========= */
-        /* Tablet (≤ 992px) */
-        @media (max-width: 992px) {
-          .sidebar {
-            transform: translateX(-100%);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-          }
-
-          .sidebar.open {
-            transform: translateX(0);
-          }
-
-          .main-content {
-            margin-left: 0 !important;
-            width: 100% !important;
-            padding: 15px;
-          }
-
-          .mobile-menu-btn {
-            display: flex;
-          }
-
-          .topbar {
-            margin: 15px 15px 20px 15px;
-            width: calc(100% - 30px);
-          }
-
-          .container-fluid {
-            padding-left: 15px;
-            padding-right: 15px;
-          }
-
-          /* Adjust chart legend position for tablet */
-          .chart-container canvas {
-            max-height: 280px;
-          }
-        }
-
-        /* Tablet (≤ 768px) */
-        @media (max-width: 768px) {
-          .topbar {
-            padding: 1rem;
-            min-height: 70px;
-            margin: 12px 12px 15px 12px;
-            width: calc(100% - 24px);
-          }
-
-          .welcome h1 {
-            font-size: 1.4rem;
-          }
-
-          .welcome p {
-            font-size: 0.85rem;
-          }
-
-          .user-area {
-            gap: 0.8rem;
-          }
-
-          .icon {
-            width: 40px;
-            height: 40px;
-            font-size: 1rem;
-          }
-
-          .user-avatar {
-            width: 40px;
-            height: 40px;
-          }
-
-          .mobile-menu-btn {
-            top: 15px;
-            left: 15px;
-            width: 40px;
-            height: 40px;
-            font-size: 18px;
-          }
-
-          .dashboard-card {
-            padding: 18px;
-          }
-
-          .data-section {
-            padding: 18px;
-          }
-
-          .chart-container {
-            height: 250px;
-          }
-
-          th,
-          td {
-            padding: 12px 14px;
-            font-size: 0.85rem;
-          }
-        }
-
-        /* Mobile (≤ 576px) */
-        @media (max-width: 576px) {
-          .topbar {
-            padding: 0.8rem;
-            min-height: 65px;
-            margin: 10px 8px 15px 8px;
-            width: calc(100% - 16px);
-          }
-
-          .topbar-left {
-            gap: 0.8rem;
-          }
-
-          .welcome h1 {
-            font-size: 1.2rem;
-          }
-
-          .welcome p {
-            display: none;
-          }
-
-          .icon {
-            width: 36px;
-            height: 36px;
-          }
-
-          .user-avatar {
-            width: 36px;
-            height: 36px;
-          }
-
-          .user-area {
-            justify-content: flex-end;
-          }
-
-          .mobile-menu-btn {
-            top: 12px;
-            left: 12px;
-            width: 36px;
-            height: 36px;
-            font-size: 16px;
-          }
-
-          .dashboard-card {
-            padding: 16px;
-          }
-
-          .dashboard-card h3 {
-            font-size: 15px;
-          }
-
-          .dashboard-card p {
-            font-size: 24px;
-          }
-
-          .data-section {
-            padding: 16px;
-            margin-bottom: 15px;
-          }
-
-          .chart-container {
-            height: 220px;
-          }
-
-          .section-title {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-          }
-
-          /* Responsive table for mobile */
-          @media (max-width: 576px) {
-            .table-responsive {
-              overflow-x: auto;
-            }
-
-            table {
-              display: block;
-              min-width: 100%;
-            }
-
-            thead {
-              display: none;
-            }
-
-            tr {
-              display: block;
-              margin-bottom: 10px;
-              border: 1px solid #e5e7eb;
-              border-radius: 8px;
-              padding: 10px;
-              background: #fff;
-            }
-
-            td {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              padding: 6px 8px;
-              border-bottom: 1px solid #f1f5f9;
-              text-align: right;
-              white-space: normal;
-            }
-
-            td:last-child {
-              border-bottom: none;
-              justify-content: center;
-              padding-top: 10px;
-            }
-
-            td::before {
-              content: attr(data-label);
-              font-weight: 600;
-              color: #1a237e;
-              margin-right: 8px;
-              text-align: left;
-              flex: 1;
-              font-size: 13px;
-            }
-          }
-        }
-
-        /* Extra Small Mobile (≤ 400px) */
-        @media (max-width: 400px) {
-          .topbar {
-            padding: 0.7rem;
-            min-height: 60px;
-            margin: 8px 6px 12px 6px;
-            width: calc(100% - 12px);
-          }
-
-          .topbar-left {
-            gap: 0.6rem;
-          }
-
-          .welcome h1 {
-            font-size: 1.1rem;
-          }
-
-          .user-avatar {
-            width: 34px;
-            height: 34px;
-          }
-
-          .mobile-menu-btn {
-            top: 10px;
-            left: 10px;
-            width: 34px;
-            height: 34px;
-            font-size: 15px;
-          }
-
-          .dashboard-card {
-            padding: 14px;
-          }
-
-          .data-section {
-            padding: 14px;
-          }
-
-          .chart-container {
-            height: 200px;
-          }
-
-          td {
-            padding: 5px 6px;
-            font-size: 12px;
-          }
-
-          td::before {
-            font-size: 12px;
-            margin-right: 5px;
-          }
-        }
-
-        /* Very Small Mobile (≤ 320px) */
-        @media (max-width: 320px) {
-          .topbar {
-            margin: 6px 5px 10px 5px;
-            width: calc(100% - 10px);
-            padding: 0.6rem;
-          }
-
-          .mobile-menu-btn {
-            top: 8px;
-            left: 8px;
-            width: 32px;
-            height: 32px;
-            font-size: 14px;
-          }
-
-          .dashboard-card {
-            padding: 12px;
-          }
-
-          .data-section {
-            padding: 12px;
-          }
-
-          .chart-container {
-            height: 180px;
-          }
-
-          td {
-            padding: 4px 5px;
-            font-size: 11px;
-          }
-
-          td::before {
-            font-size: 11px;
-            margin-right: 4px;
-          }
-        }
-      `}</style>
-    </div>
+        </main>
+      </div>
+    </>
   );
 };
 
-export default Analytics;
+export default AnalyticsPage;

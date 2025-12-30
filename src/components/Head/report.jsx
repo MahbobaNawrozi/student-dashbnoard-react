@@ -1,4 +1,3 @@
-/* components/Head/report.jsx */
 import { useState, useEffect, useRef } from "react";
 import "./styles.css";
 import {
@@ -28,15 +27,29 @@ ChartJS.register(
 );
 
 export default function Report() {
-  /* ---------- sidebar ---------- */
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   useEffect(() => {
-    const onResize = () => setCollapsed(window.innerWidth <= 992);
+    const onResize = () => {
+      const shouldCollapse = window.innerWidth <= 992;
+      setCollapsed(shouldCollapse);
+      if (window.innerWidth > 992) {
+        setMobileOpen(false);
+      }
+    };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  /* ---------- nav ---------- */
+  const toggleSidebar = () => {
+    if (window.innerWidth <= 992) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setCollapsed(!collapsed);
+    }
+  };
+
   const navLinks = [
     { icon: "fas fa-tachometer-alt", label: "Dashboard", to: "/index" },
     { icon: "fas fa-chalkboard-teacher", label: "Teachers", to: "/teachers" },
@@ -47,7 +60,6 @@ export default function Report() {
     { icon: "fas fa-cog", label: "Settings", to: "/setting" },
   ];
 
-  /* ---------- charts ---------- */
   const [semester, setSemester] = useState("spring");
   const resultChartRef = useRef(null);
   const attChartRef = useRef(null);
@@ -107,7 +119,6 @@ export default function Report() {
     scales: { y: { beginAtZero: false, min: 70, max: 100 } },
   };
 
-  /* ---------- recent reports ---------- */
   const recentReports = [
     {
       name: "Semester Results Spring",
@@ -128,10 +139,8 @@ export default function Report() {
     "2 teacher leave requests",
   ];
 
-  /* ---------- actions ---------- */
   const viewReport = (name) => alert(`Viewing: ${name}`);
   const downloadReport = (name) => alert(`Downloading: ${name}`);
-
   const downloadPDF = () => window.print();
 
   const css = `
@@ -161,16 +170,14 @@ export default function Report() {
       width: 100%;
     }
     
-    /* ========== MOBILE FIRST STYLES ========== */
-    /* Main Content - Mobile First */
     .main-content {
       width: 100%;
       min-height: 100vh;
       transition: all 0.3s;
       padding: 0.5rem;
+      margin-left: 0;
     }
     
-    /* Topbar - Mobile First */
     .topbar {
       background: #fff;
       box-shadow: var(--shadow);
@@ -183,12 +190,32 @@ export default function Report() {
       width: 100%;
     }
     
-    .menu-toggle {
+    .topbar-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .mobile-menu-toggle {
       font-size: 1.25rem;
       cursor: pointer;
       color: var(--text);
       padding: 0.5rem;
       border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .desktop-menu-toggle {
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: var(--text);
+      padding: 0.5rem;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      justify-content: center;
     }
     
     .user-area {
@@ -225,7 +252,6 @@ export default function Report() {
       border: 2px solid #f8f9fa;
     }
     
-    /* Overview Cards - Mobile First */
     .overview-cards {
       display: grid;
       grid-template-columns: 1fr;
@@ -257,7 +283,6 @@ export default function Report() {
       color: var(--accent);
     }
     
-    /* Report Card - Mobile First */
     .report-card,
     .modern-card {
       background: var(--card-bg);
@@ -281,7 +306,6 @@ export default function Report() {
       color: var(--accent);
     }
     
-    /* Chart Filter - Mobile First */
     .chart-filter {
       margin-bottom: 1rem;
       display: flex;
@@ -304,7 +328,6 @@ export default function Report() {
       box-sizing: border-box;
     }
     
-    /* Chart Container - Mobile First */
     .chart-box {
       height: 250px;
       position: relative;
@@ -312,7 +335,6 @@ export default function Report() {
       width: 100%;
     }
     
-    /* Export Buttons - Mobile First */
     .export-buttons {
       margin-top: 1rem;
       display: flex;
@@ -336,7 +358,6 @@ export default function Report() {
       gap: 0.5rem;
     }
     
-    /* Stats Text - Mobile First */
     .stats-text {
       font-size: 13px;
       color: #6b7280;
@@ -348,7 +369,6 @@ export default function Report() {
       margin-bottom: 0.5rem;
     }
     
-    /* Modern Card - Mobile First */
     .modern-card h3 {
       font-size: 18px;
       font-weight: 600;
@@ -359,7 +379,6 @@ export default function Report() {
       margin-bottom: 1rem;
     }
     
-    /* Table - Mobile First */
     .table-responsive {
       overflow-x: auto;
       width: 100%;
@@ -421,7 +440,6 @@ export default function Report() {
       width: 100%;
     }
     
-    /* Pending List - Mobile First */
     .pending-list {
       list-style: none;
       padding: 0;
@@ -451,7 +469,6 @@ export default function Report() {
       margin-top: 0.375rem;
     }
     
-    /* Sidebar - Mobile First (hidden by default) */
     .sidebar {
       width: 280px;
       background: var(--sidebar-bg);
@@ -533,27 +550,6 @@ export default function Report() {
       font-weight: 500;
     }
     
-    /* Mobile Menu Button */
-    .mobile-menu-btn {
-      display: flex;
-      position: fixed;
-      top: 0.75rem;
-      left: 0.75rem;
-      z-index: 1040;
-      background: var(--accent);
-      color: white;
-      border: none;
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius);
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    
-    /* Sidebar Overlay */
     .sidebar-overlay {
       display: none;
       position: fixed;
@@ -570,7 +566,6 @@ export default function Report() {
       display: block;
     }
     
-    /* ========== TABLET STYLES (576px and up) ========== */
     @media (min-width: 576px) {
       .main-content {
         padding: 0.75rem;
@@ -614,10 +609,13 @@ export default function Report() {
       }
     }
     
-    /* ========== DESKTOP STYLES (992px and up) ========== */
     @media (min-width: 992px) {
-      .mobile-menu-btn {
-        display: none;
+      .mobile-menu-toggle {
+        display: none !important;
+      }
+      
+      .desktop-menu-toggle {
+        display: flex !important;
       }
       
       .sidebar {
@@ -705,7 +703,6 @@ export default function Report() {
       }
     }
     
-    /* ========== LARGE DESKTOP (1200px and up) ========== */
     @media (min-width: 1200px) {
       .main-content {
         padding: 1rem 2rem;
@@ -717,7 +714,6 @@ export default function Report() {
       }
     }
     
-    /* ========== EXTRA SMALL MOBILE (≤400px) ========== */
     @media (max-width: 400px) {
       .main-content {
         padding: 0.25rem;
@@ -726,13 +722,6 @@ export default function Report() {
       .topbar {
         padding: 0.5rem;
         margin: 0 0 0.75rem 0;
-      }
-      
-      .mobile-menu-btn {
-        top: 0.5rem;
-        left: 0.5rem;
-        width: 36px;
-        height: 36px;
       }
       
       .user-area i.fa-calendar-alt,
@@ -745,7 +734,6 @@ export default function Report() {
       }
     }
     
-    /* Animation */
     .fade-in {
       animation: fadeIn 0.3s ease-in;
     }
@@ -761,7 +749,6 @@ export default function Report() {
       }
     }
     
-    /* Print Styles */
     @media print {
       .no-print {
         display: none !important;
@@ -773,22 +760,25 @@ export default function Report() {
     <>
       <style>{css}</style>
 
-      {/* mobile hamburger */}
-      <button
-        id="mobileMenuToggle"
-        className="mobile-menu-btn"
-        onClick={() => setCollapsed((c) => !c)}
-      >
-        <i className="fas fa-bars"></i>
-      </button>
+      <div
+        className={`sidebar-overlay ${mobileOpen ? "open" : ""}`}
+        onClick={() => setMobileOpen(false)}
+      />
 
-      {/* sidebar */}
-      <aside className={`sidebar ${collapsed ? "collapsed" : ""}`} id="sidebar">
+      <aside
+        className={`sidebar ${collapsed ? "collapsed" : ""} ${
+          mobileOpen ? "open" : ""
+        }`}
+        id="sidebar"
+      >
         <div className="sidebar-header">Computer Dept Head</div>
         <ul className="nav-links">
           {navLinks.map((l) => (
             <li key={l.to} className={l.active ? "active" : ""}>
-              <a href={l.to}>
+              <a
+                href={l.to}
+                onClick={() => window.innerWidth <= 992 && setMobileOpen(false)}
+              >
                 <i className={l.icon}></i> <span>{l.label}</span>
               </a>
             </li>
@@ -803,47 +793,49 @@ export default function Report() {
         </ul>
       </aside>
 
-      {/* main content */}
       <main className="main-content">
-        {/* topbar */}
         <div className="topbar">
           <div className="d-flex align-items-center w-100 justify-content-between">
-            <div className="d-flex align-items-center">
+            <div className="topbar-header">
               <div
-                className="menu-toggle"
-                onClick={() => setCollapsed((c) => !c)}
+                className="mobile-menu-toggle"
+                onClick={toggleSidebar}
+                aria-label="Toggle menu"
               >
                 <i className="fas fa-bars"></i>
               </div>
+
+              <div
+                className="desktop-menu-toggle"
+                onClick={toggleSidebar}
+                aria-label="Toggle sidebar"
+              >
+                <i className="fas fa-bars"></i>
+              </div>
+
               <h2 className="mb-0 ms-2 ms-sm-3">
                 <span className="d-none d-sm-inline">Department Reports</span>
                 <span className="d-inline d-sm-none">Reports</span>
               </h2>
             </div>
             <div className="user-area">
-              <div className="position-relative d-inline-block me-2">
-                <i className="fas fa-bell"></i>
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                  style={{ fontSize: "0.6rem", padding: "2px 4px" }}
-                >
-                  3
-                </span>
+              <div className="notification-badge position-relative">
+                <i className="fas fa-bell fs-5"></i>
+                <span className="badge-counter">3</span>
               </div>
-              <i className="fas fa-calendar-alt d-none d-md-inline-block me-2"></i>
-              <i className="fas fa-envelope d-none d-md-inline-block me-2"></i>
+              <i className="fas fa-calendar-alt d-none d-md-inline-block fs-5"></i>
+              <i className="fas fa-envelope d-none d-md-inline-block fs-5"></i>
               <a href="/profile.head" className="d-inline-block">
                 <img
                   src="https://i.pravatar.cc/100?img=12"
                   alt="User Avatar"
-                  style={{ width: 32, height: 32 }}
+                  className="avatar-img"
                 />
               </a>
             </div>
           </div>
         </div>
 
-        {/* overview cards */}
         <div className="overview-cards fade-in">
           <div className="overview-card">
             <h4>Total Students</h4>
@@ -863,7 +855,6 @@ export default function Report() {
           </div>
         </div>
 
-        {/* semester results chart */}
         <div className="report-card fade-in">
           <h3>
             <i className="fas fa-graduation-cap"></i> Semester Results
@@ -888,7 +879,6 @@ export default function Report() {
           </div>
         </div>
 
-        {/* attendance trend chart */}
         <div className="report-card fade-in">
           <h3>
             <i className="fas fa-calendar-check"></i> Attendance Trend
@@ -908,7 +898,6 @@ export default function Report() {
           </div>
         </div>
 
-        {/* recent reports table */}
         <div className="modern-card fade-in">
           <h3>
             <i className="fas fa-file-alt"></i> Recent Reports
@@ -952,7 +941,6 @@ export default function Report() {
           </div>
         </div>
 
-        {/* pending items */}
         <div className="modern-card fade-in">
           <h3>
             <i className="fas fa-clock"></i> Pending Items

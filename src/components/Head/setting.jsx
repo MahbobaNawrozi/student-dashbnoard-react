@@ -2,11 +2,27 @@ import { useState, useEffect } from "react";
 import "./styles.css";
 export default function Settings() {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   useEffect(() => {
-    const onResize = () => setCollapsed(window.innerWidth <= 992);
+    const onResize = () => {
+      const shouldCollapse = window.innerWidth <= 992;
+      setCollapsed(shouldCollapse);
+      if (window.innerWidth > 992) {
+        setMobileOpen(false);
+      }
+    };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  const toggleSidebar = () => {
+    if (window.innerWidth <= 992) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setCollapsed(!collapsed);
+    }
+  };
 
   const [accName, setAccName] = useState("");
   const [accEmail, setAccEmail] = useState("");
@@ -193,16 +209,14 @@ export default function Settings() {
       width: 100%;
     }
     
-    /* ========== MOBILE FIRST STYLES ========== */
-    /* Main Content - Mobile First */
     .main-content {
       width: 100%;
       min-height: 100vh;
       transition: all 0.3s;
       padding: 0.5rem;
+      margin-left: 0;
     }
     
-    /* Topbar - Mobile First (Matches Report Page) */
     .topbar {
       background: #fff;
       box-shadow: var(--shadow);
@@ -215,12 +229,32 @@ export default function Settings() {
       width: 100%;
     }
     
-    .menu-toggle {
+    .topbar-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .mobile-menu-toggle {
       font-size: 1.25rem;
       cursor: pointer;
       color: var(--text);
       padding: 0.5rem;
       border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .desktop-menu-toggle {
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: var(--text);
+      padding: 0.5rem;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      justify-content: center;
     }
     
     .user-area {
@@ -257,7 +291,6 @@ export default function Settings() {
       border: 2px solid #f8f9fa;
     }
     
-    /* Settings Grid - Mobile First */
     .settings-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -288,7 +321,6 @@ export default function Settings() {
       color: var(--accent);
     }
     
-    /* Form Elements - Mobile First */
     .form-group {
       margin-bottom: 1rem;
     }
@@ -312,7 +344,6 @@ export default function Settings() {
       box-sizing: border-box;
     }
     
-    /* Toggle Switch - Mobile First */
     .toggle-row {
       display: flex;
       justify-content: space-between;
@@ -375,7 +406,6 @@ export default function Settings() {
       transform: translateX(24px);
     }
     
-    /* Color Picker - Mobile First */
     .color-picker {
       display: flex;
       gap: 1rem;
@@ -403,7 +433,6 @@ export default function Settings() {
       text-align: center;
     }
     
-    /* Quiet Hours - Mobile First */
     .quiet-hours {
       display: flex;
       align-items: center;
@@ -417,7 +446,6 @@ export default function Settings() {
       padding: 0.5rem;
     }
     
-    /* Buttons - Mobile First */
     .btn-save {
       background: var(--accent);
       color: #fff;
@@ -435,7 +463,6 @@ export default function Settings() {
       font-weight: 500;
     }
     
-    /* System Zone - Mobile First */
     .system-zone {
       grid-column: 1 / -1;
       margin-top: 1rem;
@@ -537,7 +564,6 @@ export default function Settings() {
       width: 100%;
     }
     
-    /* Sidebar - Mobile First (hidden by default) */
     .sidebar {
       width: 280px;
       background: var(--sidebar-bg);
@@ -619,27 +645,6 @@ export default function Settings() {
       font-weight: 500;
     }
     
-    /* Mobile Menu Button */
-    .mobile-menu-btn {
-      display: flex;
-      position: fixed;
-      top: 0.75rem;
-      left: 0.75rem;
-      z-index: 1040;
-      background: var(--accent);
-      color: white;
-      border: none;
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius);
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    
-    /* Sidebar Overlay */
     .sidebar-overlay {
       display: none;
       position: fixed;
@@ -656,7 +661,6 @@ export default function Settings() {
       display: block;
     }
     
-    /* File Upload - Mobile First */
     .file-upload {
       width: 100%;
       border: 1px dashed var(--border);
@@ -670,7 +674,6 @@ export default function Settings() {
       font-size: 14px;
     }
     
-    /* ========== TABLET STYLES (576px and up) ========== */
     @media (min-width: 576px) {
       .main-content {
         padding: 0.75rem;
@@ -723,10 +726,13 @@ export default function Settings() {
       }
     }
     
-    /* ========== DESKTOP STYLES (992px and up) ========== */
     @media (min-width: 992px) {
-      .mobile-menu-btn {
-        display: none;
+      .mobile-menu-toggle {
+        display: none !important;
+      }
+      
+      .desktop-menu-toggle {
+        display: flex !important;
       }
       
       .sidebar {
@@ -800,7 +806,6 @@ export default function Settings() {
       }
     }
     
-    /* ========== LARGE DESKTOP (1200px and up) ========== */
     @media (min-width: 1200px) {
       .main-content {
         padding: 1rem 2rem;
@@ -819,7 +824,6 @@ export default function Settings() {
       }
     }
     
-    /* ========== EXTRA SMALL MOBILE (≤400px) ========== */
     @media (max-width: 400px) {
       .main-content {
         padding: 0.25rem;
@@ -828,13 +832,6 @@ export default function Settings() {
       .topbar {
         padding: 0.5rem;
         margin: 0 0 0.75rem 0;
-      }
-      
-      .mobile-menu-btn {
-        top: 0.5rem;
-        left: 0.5rem;
-        width: 36px;
-        height: 36px;
       }
       
       .user-area i.fa-calendar-alt,
@@ -864,7 +861,6 @@ export default function Settings() {
       }
     }
     
-    /* Animation */
     .fade-in {
       animation: fadeIn 0.3s ease-in;
     }
@@ -885,20 +881,25 @@ export default function Settings() {
     <>
       <style>{css}</style>
 
-      <button
-        id="mobileMenuToggle"
-        className="mobile-menu-btn"
-        onClick={() => setCollapsed((c) => !c)}
-      >
-        <i className="fas fa-bars"></i>
-      </button>
+      <div
+        className={`sidebar-overlay ${mobileOpen ? "open" : ""}`}
+        onClick={() => setMobileOpen(false)}
+      />
 
-      <aside className={`sidebar ${collapsed ? "collapsed" : ""}`} id="sidebar">
+      <aside
+        className={`sidebar ${collapsed ? "collapsed" : ""} ${
+          mobileOpen ? "open" : ""
+        }`}
+        id="sidebar"
+      >
         <div className="sidebar-header">Computer Dept Head</div>
         <ul className="nav-links">
           {navLinks.map((l) => (
             <li key={l.to} className={l.active ? "active" : ""}>
-              <a href={l.to}>
+              <a
+                href={l.to}
+                onClick={() => window.innerWidth <= 992 && setMobileOpen(false)}
+              >
                 <i className={l.icon}></i> <span>{l.label}</span>
               </a>
             </li>
@@ -913,49 +914,50 @@ export default function Settings() {
         </ul>
       </aside>
 
-      {/* main content */}
       <main className="main-content">
-        {/* topbar - matches report page */}
         <div className="topbar">
           <div className="d-flex align-items-center w-100 justify-content-between">
-            <div className="d-flex align-items-center">
+            <div className="topbar-header">
               <div
-                className="menu-toggle"
-                onClick={() => setCollapsed((c) => !c)}
+                className="mobile-menu-toggle"
+                onClick={toggleSidebar}
+                aria-label="Toggle menu"
               >
                 <i className="fas fa-bars"></i>
               </div>
+
+              <div
+                className="desktop-menu-toggle"
+                onClick={toggleSidebar}
+                aria-label="Toggle sidebar"
+              >
+                <i className="fas fa-bars"></i>
+              </div>
+
               <h2 className="mb-0 ms-2 ms-sm-3">
                 <span className="d-none d-sm-inline">Department Settings</span>
                 <span className="d-inline d-sm-none">Settings</span>
               </h2>
             </div>
             <div className="user-area">
-              <div className="position-relative d-inline-block me-2">
-                <i className="fas fa-bell"></i>
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                  style={{ fontSize: "0.6rem", padding: "2px 4px" }}
-                >
-                  3
-                </span>
+              <div className="notification-badge position-relative">
+                <i className="fas fa-bell fs-5"></i>
+                <span className="badge-counter">3</span>
               </div>
-              <i className="fas fa-calendar-alt d-none d-md-inline-block me-2"></i>
-              <i className="fas fa-envelope d-none d-md-inline-block me-2"></i>
+              <i className="fas fa-calendar-alt d-none d-md-inline-block fs-5"></i>
+              <i className="fas fa-envelope d-none d-md-inline-block fs-5"></i>
               <a href="/profile.head" className="d-inline-block">
                 <img
                   src="https://i.pravatar.cc/100?img=12"
                   alt="User Avatar"
-                  style={{ width: 32, height: 32 }}
+                  className="avatar-img"
                 />
               </a>
             </div>
           </div>
         </div>
 
-        {/* settings grid */}
         <div className="settings-grid fade-in">
-          {/* ---- ACCOUNT ---- */}
           <div className="settings-card">
             <h3>
               <i className="fas fa-user-circle"></i> Account
@@ -993,7 +995,6 @@ export default function Settings() {
             </button>
           </div>
 
-          {/* ---- NOTIFICATIONS ---- */}
           <div className="settings-card">
             <h3>
               <i className="fas fa-bell"></i> Notifications
@@ -1057,7 +1058,6 @@ export default function Settings() {
             </button>
           </div>
 
-          {/* ---- THEME & APPEARANCE ---- */}
           <div className="settings-card">
             <h3>
               <i className="fas fa-palette"></i> Theme & Appearance
@@ -1106,7 +1106,6 @@ export default function Settings() {
             </button>
           </div>
 
-          {/* ---- SECURITY ---- */}
           <div className="settings-card">
             <h3>
               <i className="fas fa-shield-alt"></i> Security
@@ -1161,7 +1160,6 @@ export default function Settings() {
             </button>
           </div>
 
-          {/* ---- DEPARTMENT PROFILE ---- */}
           <div className="settings-card">
             <h3>
               <i className="fas fa-building"></i> Department Profile
@@ -1208,7 +1206,6 @@ export default function Settings() {
             </button>
           </div>
 
-          {/* ---- APPROVAL WORKFLOWS ---- */}
           <div className="settings-card">
             <h3>
               <i className="fas fa-tasks"></i> Approval Workflows
@@ -1267,7 +1264,6 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* ---- SYSTEM BACKUP & RECOVERY (Danger Zone) ---- */}
         <section className="system-zone fade-in">
           <div className="zone-container">
             <header className="zone-header">
